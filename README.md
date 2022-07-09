@@ -1,2 +1,2 @@
-# Orient_Disc_Crowding
+# Orientation discrimination task under crwoding condition
 The code for orientation discrimination task under crowding condition
