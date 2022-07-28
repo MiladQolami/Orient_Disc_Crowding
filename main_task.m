@@ -36,8 +36,10 @@ PsychImaging( 'AddTask' , 'FinalFormatting','DisplayColorCorrection' , 'SimpleGa
 % setup Gamma correction method using simple power  function for all color channels
 
 [windowPtr p.ScreenRect] = PsychImaging( 'OpenWindow'  , whichScreen, p.ScreenBackground);
-% Finishes the setup phase for imaging pipeline creates an onscreen window, performs all remaining
-% configuration steps
+
+[screenXpixels, screenYpixels] = Screen('WindowSize', windowPtr); % size of open window
+
+[xCenter, yCenter] = RectCenter(p.ScreenRect); % center of the open window
 
 PsychColorCorrection( 'SetEncodingGamma', windowPtr,1/ p.ScreenGamma);
 % set Gamma for all color channels
@@ -55,16 +57,16 @@ Screen( 'TextSize', windowPtr, 24); % set the font size
 %% Experiment module 
 
 % Specify general experiment parameters
-nTrials = 2;   % number of trials
-p.randSeed = ClockRandSeed;     % use clock to set random number generator
+nTrials = 2;   
+p.randSeed = ClockRandSeed;     
 
 % Specify the stimulus
-p.stimSize = 5;     % Stimulus size in visual angle
-p.stimDuration = 0.250;     % stimulus duration in seconds
+p.stimSize = 4;    
+p.stimDuration = 0.250; 
 p.ISI = 0.5;    % duration between response and next trial onset
-p.contrast = 0.2;   % grating contrast
-p.tf = 4;   % drifting temporal frequency in Hz
-p.sf = 4;   % spatial frequency in cycles/degree
+p.contrast = 0.2;   
+p.tf = 4;   % Drifting temporal frequency in Hz
+p.sf = 4;   % Spatial frequency in cycles/degree
 
 % Compute stimulus parameters
 ppd = pi/180 * p.ScreenDistance / p.ScreenHeight * p.ScreenRect(4);     % pixels per degree
@@ -76,7 +78,7 @@ phasePerFrame = 360 * p.tf / p.ScreenFrameRate;     % phase drift per frame
 fixRect = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixation
 params = [0 sf p.contrast 0];  
 
-
+% generating stimulus
 text =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
     m, m, [.5 .5 .5 .5],50,.5,[],[],[]);
 Screen('DrawTexture', windowPtr, text, [], [], 45, [], [],...
@@ -97,99 +99,91 @@ Screen('Flip',windowPtr)
 
 
 
-
+% 
 % KbName('UnifyKeyNames'); % set up keyboard functions to use
 %                          % the same labels on different
 %                          % computer platforms
 % 
 % % Initialize a table to set up experimental conditions
-% p.recLabel = {'trialIndex' 'luminanceIndex' ...
-% 'reportedLuminance' };
+% p.recLabel = {'trialIndex' 'motionDirection' 'respCorrect' 'respTime' };
+% 
 % rec = nan(nTrials, length(p.recLabel));
-% % matrix rec is nTrials x 3 of NaN
+% % matrix rec is nTrials x 4 of NaN
 % 
-% rec(:, 1) = 1 : nTrials; % set trial numbers from 1 to nTrials
+% rec(:, 1) = 1 : nTrials;    % label the trial type numbers from 1 to nTrials
+% rec(:, 2) = -1;     % -1 for left motion direction
+% rec(1 : nTrials/2, 2) = 1 ;     % half of the trials set to +1 for right motion Direction
 % 
-% luminanceIndex = repmat((1 : nLevels),p.nTrialsPerBlock/nLevels, nBlocks);
-% % set the luminance index 1 to 7 repeatedly into
-% % matrix using repmat (replicate array)
-% 
-% luminanceIndex = Shuffle(luminanceIndex,1);
-% % shuffle each block (column) of matrix
-% 
-% rec(:, 2) = luminanceIndex(:); % randomized (shuffled) luminance indexes
-%                                % into rec(:,2)
+% rec(:, 2) = Shuffle(rec(:, 2));     % randomize motion direction over trials
 % 
 % % Prioritize display to optimize display timing
 % Priority(MaxPriority(windowPtr));
 % 
 % % Start experiment with instructions
-% str = sprintf(['Input the perceived intensity of the disk ' ...
-% 'for each trial.\n\n' 'Press Backspace or ' ...
-% 'Delete to remove the last input.\n\n' ...
-% 'Press Enter to finish your input.\n\n\n' ...
-% 'Press SPACE to start the experiment.' ]);
+% str = sprintf('Left/Right arrow keys for direction.\n\n Press SPACE to start.'  );
 % 
 % DrawFormattedText(windowPtr, str, 'center', 'center', 1);
-% % Draw Instruction text string centered in window
-% % onto frame buffer
+% % Draw instruction text string centered in window
 % 
-% Screen( 'Flip', windowPtr); % flip the text image into  active buffer
+% Screen( 'Flip', windowPtr);
+% % flip the text image into active buffer
 % 
-% KbWait;; % wait till space bar is pressed
+% KbWait;
+% RestrictKeysForKbCheck([39,37,32,27]);
 % 
-% Secs = Screen('Flip', windowPtr); % flip the background image
-% % into active buffer
+% Screen( 'FillOval', windowPtr, 0, fixRect);      % create fixation box as black (0)
+% Secs = Screen('Flip', windowPtr);    % flip the fixation image into active buffer
 % 
-% p.start = datestr(now); % record start time
-% 
-% % Instruction for trial and reference intensity
-% trialInstruction = 'The perceived intensity of the disk is' ;
-% refInstruction = ['This is the reference with an intensity of ' ...
-%     '10.\n\nPress SPACE to proceed']  ;
+% p.start = datestr(now);    % record start time
 % 
 % % Run nTrials trials
 % for i = 1 : nTrials
-%     % Show the reference luminance once every 14 trials
-%     if mod(i, p.nTrialsPerBlock) == 1
-%         Screen('FillOval', windowPtr, refGrayLevel, stimRect);
-%         % make stimulus disk
-%         
-%         t0 = Screen('Flip', windowPtr, Secs + p.ISI);
-%         % show disk & return current time
+%     params(1) = 360 * rand; % set initial phase randomly
+%     Screen('DrawTexture', windowPtr,tex, [], [], 0, ...
+%     [], [], [], [], [], params);
+%     % call to draw or compute the texture pointed to by tex
+%     % with texture parameters of the initial phase, the
+%     % spatial frequency, the contrast, and fillers required
+%     % for 4 required auxiliary parameters
 % 
-%         Screen('Flip', windowPtr, t0 + p.stimDuration);
-%         % turn off the disk after p.stimDuration secs
+%     t0 = Screen('Flip', windowPtr, Secs + p.ISI);
+%     % initiate first frame after p.ISI secs
 % 
-%         DrawFormattedText(windowPtr, refInstruction, ...
-%         'center', 'center', 1);
-%         Screen('Flip', windowPtr);
-%         % show reference instruction text
-%         [secs keycode ] = KbWait();
-%         % wait for SPACE response
-%         if strcmp(KbName(keycode), 'esc'), break; end
-%         %if response is <escape> , then stop experiment
-%         Secs = Screen('Flip', windowPtr);
-%         % turn off text by flipping to background image
+%     for j = 2 : nFrames % For each of the next frames one by one
+%         params(1) = params(1) - phasePerFrame * rec(i, 2);
+%         % change phase
+%         Screen('DrawTexture', windowPtr, tex, [], [], 0,...
+%         [], [], [], [], [], params);
+%         % call to draw/compute the next frame
+%         Screen('Flip', windowPtr); % show frame
+%         % each new computation occurs fast enough to show
+%         % all nFrames at the framerate
 %     end
-%     Screen('FillOval', windowPtr, grayLevels(rec(i, 2)), ...
-%     stimRect); % make stimulus disk
+%     Screen('FillOval', windowPtr, 1, fixRect);
+%     % black fixation for response interval
 % 
-%     t0 = Screen( 'Flip', windowPtr, Secs + p.ISI);
-%     % show disk & return current time
-%     Screen( 'Flip', windowPtr, t0 + p.stimDuration);
-%     % turn off the disk after p.stimDuration
+%     Screen('Flip', windowPtr);
+%     KbWait;
+%     [keyIsDown, time_secs1, keyCode, deltaSecs] = KbCheck;
 % 
-%     num = GetEchoNumber(windowPtr, trialInstruction, ...
-%     p.ScreenRect(3) / 2 - 200, p.ScreenRect(4) / 2, 1, ...
-%     p.ScreenBackground, -1);
-%     % read a number response from the keyboard while
-%     % displaying the trial instruction
-%     Secs = Screen( 'Flip', windowPtr);
-%     % turn off trial instruction
-%     if ~isempty(num), rec(i, 3) = num; end
-%     % check the response, and record it
+% 
+%     if strcmp(KbName(keyCode), 'esc'), break; end
+%     % stop the trial sequence if keypress = <esc>
+% 
+%     respCorrect = strcmp(keyCode, 'right') == (rec(i, 2) == 1) | strcmp(keyCode, 'left') == (rec(i, 2) == -1) ;
+%     % compute if correct or incorrect
+% 
+%     rec(i, 3 : 4) = [respCorrect time_secs1-t0];
+%     % record correctness and RT in rec
+% 
+%     if rec(i, 3), Beeper; end % beep if correct
 % end
+% p.finish = datestr(now); % record finish time
+% % Save Results
+% save DriftingSinewave_rst.mat rec p; % save the results
 % sca;
-% p.finish = datestr(now); % record the finish time
-% save MagnitudeEstimation_rst.mat rec p; % save the results
+% %% System Reinstatement Module
+% Priority(0); % restore priority
+% sca; % close display window and textures,
+% % and restore the original color lookup table
+% 
