@@ -1,5 +1,5 @@
-% cd('C:\toolbox\Psychtoolbox')
-% SetupPsychtoolbox
+cd('C:\toolbox\Psychtoolbox')
+SetupPsychtoolbox
 %%
 %%%%%%%%%%%%%% Orientation Discrimination Task under Crowding %%%%%%%%%%%
 
@@ -61,39 +61,37 @@ nTrials = 2;
 p.randSeed = ClockRandSeed;     
 
 % Specify the stimulus
-p.stimSize = 4;    
+p.stimSize = 4;  
+p.stimDistance = 5;
 p.stimDuration = 0.250; 
 p.ISI = 0.5;    % duration between response and next trial onset
 p.contrast = 0.2;   
 p.tf = 4;   % Drifting temporal frequency in Hz
 p.sf = 4;   % Spatial frequency in cycles/degree
-numCrowd = 4; % number of crowding stimuli
+numCrowd = 6; % number of crowding stimuli
 
 % Compute stimulus parameters
 ppd = pi/180 * p.ScreenDistance / p.ScreenHeight * p.ScreenRect(4);     % pixels per degree
 nFrames = round(p.stimDuration * p.ScreenFrameRate);    % # stimulus frames
-m = 2 * round(p.stimSize * ppd / 2);    % horizontal and vertical
-                                        % stimulus size in pixels
-p.stimLocFellow = [xCenter yCenter xCenter+100 yCenter+100] % Stimulus location for fellow eye
-
-% Make stimuli coordinates
-allAppertures = nan(4,4)
-for i = 1: numCrowd
-    
-p.stimLocFellow = [xCenter+(xCenter/2)-m/2 yCenter-m/2 xCenter+(xCenter/2)+m/2 yCenter+m/2]
-
-
+m = 2 * round(p.stimSize * ppd / 2);    % horizontal and vertical stimulus size in pixels                                         
+d = 2 * round(p.stimDistance * ppd / 2); % stimulus distance in pixel
 sf = p.sf / ppd;    % cycles per pixel
 phasePerFrame = 360 * p.tf / p.ScreenFrameRate;     % phase drift per frame
 fixRect = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixation
 
-params = [0 sf p.contrast 0];  
+% Dividing Screen into two parts, one for each eye
+CenterRight = [xCenter+xCenter/2 yCenter];      % center of Right part 
+CenterLeft  = [xCenter-xCenter/2 yCenter];      % center of Left part 
 
 % generating stimulus
+% Generating grating stimuli
+p.stimLocTarget = [xCenter+(xCenter/2)-m/2 yCenter-m/2 xCenter+(xCenter/2)+m/2 yCenter+m/2]
+p.stimLocCrowd = VisualCrowder([xCenter+(xCenter/2),yCenter],numCrowd, d ,m)
 text =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
     m, m, [.5 .5 .5 .5],50,.5,[],[],[]);
-Screen('DrawTexture', windowPtr, text, [], p.stimLocFellow, 45, [], [],...
-[], [], [], [90, sf, 1, 0]);
+params = [0 sf p.contrast 0];  % Dfining parameters for the grating
+Screen('DrawTextures', windowPtr, text, [], [p.stimAmblyopic p.stimLocFellow'], 45, [], [],...
+[], [], [], [90, sf, 1, 0]');
 Screen('Flip',windowPtr)
 
 
