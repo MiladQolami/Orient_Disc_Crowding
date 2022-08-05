@@ -1,5 +1,5 @@
-cd('C:\toolbox\Psychtoolbox')
-SetupPsychtoolbox
+% cd('C:\toolbox\Psychtoolbox')
+% SetupPsychtoolbox
 %%
 %%%%%%%%%%%%%% Orientation Discrimination Task under Crowding %%%%%%%%%%%
 
@@ -7,6 +7,16 @@ SetupPsychtoolbox
 clc;
 clear;
 close all;
+%% Initial parameters
+DominantEye = input("Which Eye is dominant (either 'right' or 'left'? : ","s");
+while ~any(strcmp(DominantEye,{'right','left'}))
+    DominantEye = input("Which Eye is dominant (either 'right' or 'left'? : ","s");
+end
+
+BinocularCond = input("Which binocular condition? (either 'binocular' or 'monoocular'):","s")
+while ~any(strcmp(BinocularCond,{'binocular','monoocular'}))
+    BinocularCond = input("Which binocular condition? (either 'binocular' or 'monoocular'):","s")
+end
 %% Display setup module
 % Define display parameters
 whichScreen = max(Screen('screens' ));
@@ -60,9 +70,11 @@ Screen( 'TextSize', windowPtr, 24); % set the font size
 nTrials = 2;   
 p.randSeed = ClockRandSeed;     
 
+
 % Specify the stimulus
-p.stimSize = 4;  
-p.stimDistance = 5;
+p.stimSize = 4;  % In visual angle
+p.stimDistance = 5; 
+p.eccentricity = 3; 
 p.stimDuration = 0.250; 
 p.ISI = 0.5;    % duration between response and next trial onset
 p.contrast = 0.2;   
@@ -75,23 +87,55 @@ ppd = pi/180 * p.ScreenDistance / p.ScreenHeight * p.ScreenRect(4);     % pixels
 nFrames = round(p.stimDuration * p.ScreenFrameRate);    % # stimulus frames
 m = 2 * round(p.stimSize * ppd / 2);    % horizontal and vertical stimulus size in pixels                                         
 d = 2 * round(p.stimDistance * ppd / 2); % stimulus distance in pixel
+e = 2 * round(p.eccentricity * ppd / 2);  % stimulus eccentricity in pixel
 sf = p.sf / ppd;    % cycles per pixel
 phasePerFrame = 360 * p.tf / p.ScreenFrameRate;     % phase drift per frame
+
+% Creating Eccentricity matrix 
+E = [e 0;0 e;-e 0;0 -e];
+
 fixRect = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixation
 
 % Dividing Screen into two parts, one for each eye
 CenterRight = [xCenter+xCenter/2 yCenter];      % center of Right part 
 CenterLeft  = [xCenter-xCenter/2 yCenter];      % center of Left part 
 
-% generating stimulus
-% Generating grating stimuli
-p.stimLocTarget = [xCenter+(xCenter/2)-m/2 yCenter-m/2 xCenter+(xCenter/2)+m/2 yCenter+m/2]
-p.stimLocCrowd = VisualCrowder([xCenter+(xCenter/2),yCenter],numCrowd, d ,m)
+% Applying eccentircity 
+CenterRight = CenterRight + E(2,:);
+CenterLeft = CenterLeft + E(2,:); 
+
+if strcmp(BinocularCond,'monoocular')
+    if strcmp(DominantEye,'right')
+        p.stimLocTarget = [CenterRight(1)-m/2  CenterRight(2)-m/2 CenterRight(1)+m/2 CenterRight(2)+m/2];
+        p.stimLocCrowd = VisualCrowder(CenterRight,numCrowd, d ,m) ;
+    else
+        p.stimLocTarget = [CenterLeft(1)-m/2  yCenter-m/2 CenterLeft(1)+m/2 yCenter+m/2] ;
+        p.stimLocCrowd = VisualCrowder(CenterLeft,numCrowd, d ,m) ;
+    end
+else
+    if strcmp(DominantEye,'right')
+        p.stimLocTarget = [CenterRight(1)-m/2  CenterRight(2)-m/2 CenterRight(1)+m/2 CenterRight(2)+m/2];
+        p.stimLocCrowd = VisualCrowder(CenterLeft,numCrowd, d ,m) ;
+    else
+        p.stimLocTarget = [CenterLeft(1)-m/2  yCenter-m/2 CenterLeft(1)+m/2 yCenter+m/2] ;
+        p.stimLocCrowd = VisualCrowder(CenterRight,numCrowd, d ,m) ;
+    end
+end
+% Generate the stimulus texture
 text =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
     m, m, [.5 .5 .5 .5],50,.5,[],[],[]);
 params = [0 sf p.contrast 0];  % Dfining parameters for the grating
-Screen('DrawTextures', windowPtr, text, [], [p.stimAmblyopic p.stimLocFellow'], 45, [], [],...
+
+KbName('UnifyKeyNames'); % set up keyboard functions to use
+                         % the same labels on different computer platforms
+
+% Initialize a table to set up experimental conditions
+p.recLabel = {'trialIndex' 'stimOrientation' 'respCorrect' 'respTime' };
+
+
+Screen('DrawTextures', windowPtr, text, [], [p.stimLocCrowd p.stimLocTarget'], 45, [], [],...
 [], [], [], [90, sf, 1, 0]');
+Screen( 'FillOval', windowPtr, 0, fixRect);      % create fixation box as black (0)
 Screen('Flip',windowPtr)
 
 
@@ -108,14 +152,6 @@ Screen('Flip',windowPtr)
 
 
 
-% 
-% KbName('UnifyKeyNames'); % set up keyboard functions to use
-%                          % the same labels on different
-%                          % computer platforms
-% 
-% % Initialize a table to set up experimental conditions
-% p.recLabel = {'trialIndex' 'motionDirection' 'respCorrect' 'respTime' };
-% 
 % rec = nan(nTrials, length(p.recLabel));
 % % matrix rec is nTrials x 4 of NaN
 % 
