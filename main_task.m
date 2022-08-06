@@ -125,7 +125,7 @@ p.randSeed      = ClockRandSeed;
 p.stimSize      = 1.2;  % In visual angle
 p.stimDistance  = 1.8; 
 p.eccentricity  = 4.5; 
-p.stimDuration  = .4; 
+p.stimDuration  = .1; 
 p.ISI           = 1;    % duration between response and next trial onset
 p.contrast      = 1;   
 p.tf            = 4;    % Drifting temporal frequency in Hz
@@ -170,7 +170,8 @@ switch BinocularCond
     case 'monoocular'
         switch DominantEye
             case 'right'
-                onset = GetSecs;
+               KbWait;
+               onset = GetSecs;
                 for orient_i = 1:10
                     orient_vect = [repmat(rec(orient_i,3),numCrowd,1);rec(orient_i,2)]
                     % Applying eccentircity 
@@ -209,6 +210,26 @@ switch BinocularCond
                         % each new computation occurs fast enough to show
                         % all nFrames at the framerate
                         onset = Screen('Flip', windowPtr);
+                        Screen('SelectStereoDrawBuffer', windowPtr, 0);
+                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('SelectStereoDrawBuffer', windowPtr, 1);
+                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawingFinished', windowPtr);
+                        Screen('Flip', windowPtr);
+                    end
+                    WiatTime = 3;
+                    while KbCheck; end % To make sure all keys are released
+                    starttime = GetSecs;
+                    while GetSecs < starttime + WiatTime
+                        [keyIsDown secs keyCode]= KbCheck;
+                        if keyIsDown
+                            response = KbName(keyCode)
+                            resptime = secs - starttime;
+                            break
+                        else
+                            response = 'none'
+                            resptime = 999;
+                        end
                     end
                 end
             case 'left'
