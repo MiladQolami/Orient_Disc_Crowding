@@ -122,15 +122,15 @@ nTrials         = 20;
 p.randSeed      = ClockRandSeed;     
 
 % Specify the stimulus
-p.stimSize      = 1;  % In visual angle
-p.stimDistance  = 3; 
-p.eccentricity  = 2; 
-p.stimDuration  = 0.250; 
-p.ISI           = 0.5;    % duration between response and next trial onset
+p.stimSize      = 1.2;  % In visual angle
+p.stimDistance  = 1.8; 
+p.eccentricity  = 4.5; 
+p.stimDuration  = .4; 
+p.ISI           = 1;    % duration between response and next trial onset
 p.contrast      = 1;   
-p.tf            = 4;   % Drifting temporal frequency in Hz
-p.sf            = 4;   % Spatial frequency in cycles/degree
-numCrowd        = 4; % number of crowding stimuli
+p.tf            = 4;    % Drifting temporal frequency in Hz
+p.sf            = 1.5;    % Spatial frequency in cycles/degree
+numCrowd        = 4;    % number of crowding stimuli
 
 % Compute stimulus parameters
 ppd     = pi/180 * p.ScreenDistance / p.ScreenHeight * p.ScreenRect(4);     % pixels per degree
@@ -144,9 +144,9 @@ phasePerFrame = 360 * p.tf / p.ScreenFrameRate;     % phase drift per frame
 % Creating Eccentricity matrix 
 E = [e 0;0 -e;-e 0;0 e];
 
-fixRect = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixation
+fixRect = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixation point
 % Initialize a table to set up experimental conditions
-p.recLabel = {'trialIndex' 'stimOrientation' 'crowdOrientation' 'stimuliPosition' 'respCorrect' 'respTime' };
+p.recLabel = {'trialIndex' 'stimOrientation' 'distractoOrientation' 'stimuliPosition' 'respCorrect' 'respTime' };
 
 rec                                 = nan(nTrials, length(p.recLabel));     % matrix rec is nTrials x 5 of NaN
 rec(:, 1)                           = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
@@ -161,11 +161,11 @@ rec(:, 2)                           = Shuffle(rec(:, 2));     % randomize orient
 rec(:, 3)                           = Shuffle(rec(:, 2));     % randomize orientation of target over trials
 rec(:, 4)                           = Shuffle(rec(:, 4));     % randomize orientation of target over trials
 
-
 % Generate the stimulus texture
 text =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
-    m, m, [.5 .5 .5 .5],50,.5,[],[],[]);
+    m+100, m+100, [.5 .5 .5 .5],m,.5,[],[],[]);
 params = [0 sf p.contrast 0];  % Dfining parameters for the grating
+
 switch BinocularCond
     case 'monoocular'
         switch DominantEye
@@ -177,20 +177,39 @@ switch BinocularCond
                     StimPosition = [xCenter yCenter] + E(rec(orient_i,4),:);
                     p.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
                     p.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
                     % Draw left stim:
-                    Screen('FillRect',windowPtr,[0 0 0],fixRect);
+                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
 
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
                     Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'],orient_vect, [], [],...
                         [], [], [], params');
-                    Screen('FillRect',windowPtr,[0 0 0],fixRect);
+                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
                     Screen('DrawingFinished', windowPtr);
                     % Flip stim to display and take timestamp of stimulus-onset after
                     % displaying the new stimulus and record it in vector t:
-                    onset = Screen('Flip', windowPtr,onset + p.ISI);
+                    onset = Screen('Flip', windowPtr,onset + p.stimDuration);
+                    for j = 2 : nFrames % For each of the next frames one by one
+                        params(1) = params(1) - phasePerFrame ;
+                        % change phase
+                        % Select left-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 0);
+                        % Draw left stim:
+                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+
+                        % Select right-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 1);
+                        Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'],orient_vect, [], [],...
+                            [], [], [], params');
+                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawingFinished', windowPtr);
+                        % each new computation occurs fast enough to show
+                        % all nFrames at the framerate
+                        onset = Screen('Flip', windowPtr);
+                    end
                 end
             case 'left'
                 % Select left-eye image buffer for drawing:
@@ -198,10 +217,10 @@ switch BinocularCond
                 % Draw left stim:
                 Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'], 45, [], [],...
                     [], [], [], params');
-                Screen('FillRect',windowPtr,[0 0 0],fixRect);
+                Screen('FillOval',windowPtr,[0 0 0],fixRect);
                 % Select right-eye image buffer for drawing:
                 Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                Screen('FillRect',windowPtr,[0 0 0],fixRect);
+                Screen('FillOval',windowPtr,[0 0 0],fixRect);
                 Screen('DrawingFinished', windowPtr);
                 onset = Screen('Flip', windowPtr);
         end
@@ -214,13 +233,13 @@ switch BinocularCond
                 % Draw left stim:
                 Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs], 45, [], [],...
                     [], [], [], params');
-                Screen('FillRect',windowPtr,[0 0 0],fixRect)
+                Screen('FillOval',windowPtr,[0 0 0],fixRect)
 
                 % Select right-eye image buffer for drawing:
                 Screen('SelectStereoDrawBuffer', windowPtr, 1);
                 Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'],135, [], [],...
                     [], [], [], params');
-                Screen('FillRect',windowPtr,[0 0 0],fixRect)
+                Screen('FillOval',windowPtr,[0 0 0],fixRect)
                 Screen('DrawingFinished', windowPtr);
                 onset = Screen('Flip', windowPtr);
             case 'left'
@@ -230,13 +249,13 @@ switch BinocularCond
                 % Draw left stim:
                 Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'], 45, [], [],...
                     [], [], [], params');
-                Screen('FillRect',windowPtr,[0 0 0],fixRect)
+                Screen('FillOval',windowPtr,[0 0 0],fixRect)
 
                 % Select right-eye image buffer for drawing:
                 Screen('SelectStereoDrawBuffer', windowPtr, 1);
                 Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs],135, [], [],...
                     [], [], [], params');
-                Screen('FillRect',windowPtr,[0 0 0],fixRect)
+                Screen('FillOval',windowPtr,[0 0 0],fixRect)
                 Screen('DrawingFinished', windowPtr);
                 onset = Screen('Flip', windowPtr);
         end
@@ -276,33 +295,7 @@ rec(:, 3) = Shuffle(rec(:, 2));     % randomize orientation of crowding stimuli 
 % Secs = Screen('Flip', windowPtr); 
 % p.start = datestr(now);    % record start time
 
-% % Run nTrials trials
-% for i = 1 : nTrials
 
-% Select left-eye image buffer for drawing:
-% Screen('SelectStereoDrawBuffer', windowPtr, 0);
-% 
-% Draw left stim:
-% Screen('DrawTextures', windowPtr, text, [], [p.stimLocCrowd], 45, [], [],...
-%     [], [], [], params');
-% Screen('FillRect',windowPtr,[0 0 0],fixRect)
-% 
-% Select right-eye image buffer for drawing:
-% Screen('SelectStereoDrawBuffer', windowPtr, 1);
-% Screen('DrawTextures', windowPtr, text, [], [p.stimLocTarget],135, [], [],...
-%     [], [], [], params');
-% Screen('FillRect',windowPtr,[0 0 0],fixRect)
-% 
-% 
-%  Tell PTB drawing is finished for this frame:
-% Screen('DrawingFinished', windowPtr);
-% Flip stim to display and take timestamp of stimulus-onset after
-% displaying the new stimulus and record it in vector t:
-% onset = Screen('Flip', windowPtr);
-
-
-%     Screen('FillOval', windowPtr, 1, fixRect);
-%     Screen('Flip', windowPtr);
 %     KbWait;
 %     [keyIsDown, time_secs1, keyCode, deltaSecs] = KbCheck;
 
