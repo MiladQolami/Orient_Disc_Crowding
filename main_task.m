@@ -87,7 +87,7 @@ PsychImaging('AddTask', 'General', 'EnablePseudoGrayOutput' );
 PsychImaging( 'AddTask' , 'FinalFormatting','DisplayColorCorrection' , 'SimpleGamma' );
 % setup Gamma correction method using simple power  function for all color channels
 
-[windowPtr p.ScreenRect] = PsychImaging( 'OpenWindow'  , scrnNum, p.ScreenBackground, [], [], [], stereoMode);
+[windowPtr p.ScreenRect] = PsychImaging( 'OpenWindow'  , scrnNum, p.ScreenBackground, [0 0 1800 900], [], [], stereoMode);
 
 if ismember(stereoMode, [4, 5])
     % This uncommented bit of code would allow to exercise the
@@ -113,19 +113,19 @@ p.ScreenFrameRate = FrameRate(windowPtr);
 % get current frame rate
 Screen( 'TextFont', windowPtr, 'Times' );
 % set the font for the screen to Times
-Screen( 'TextSize', windowPtr, 24); % set the font size
+Screen( 'TextSize', windowPtr, 20); % set the font size
                                     % for the screen to 24
 %% Experiment module 
 
 % Specify general experiment parameters
-nTrials         = 20;   
+nTrials         = 4;   % need at least 4 trials
 p.randSeed      = ClockRandSeed;     
 
 % Specify the stimulus
-p.stimSize      = 1;  % In visual angle
-p.stimDistance  = 1.4; 
+p.stimSize      = 2;  % In visual angle
+p.stimDistance  = 2.5; 
 p.eccentricity  = 4.5; 
-p.stimDuration  = 1; 
+p.stimDuration  = 20; 
 p.ISI           = 1;    % duration between response and next trial onset
 p.contrast      = 1;   
 p.tf            = 4;    % Drifting temporal frequency in Hz
