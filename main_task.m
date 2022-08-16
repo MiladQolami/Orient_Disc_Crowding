@@ -118,15 +118,15 @@ Screen( 'TextSize', windowPtr, 20); % set the font size
 %% Experiment module
 
 % Specify general experiment parameters
-repCond         = 1;   % number of repetition for each conditin, this determines number ot trials
+repCond         = 3;   % number of repetition for each conditin, this determines number ot trials
 p.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
-p.stimSize      = 1;  % In visual angle
-p.stimDistance  = 1.4;
+p.stimSize      = 1.5;  % In visual angle
+p.stimDistance  = 3;
 p.eccentricity  = 4.8;
-p.stimDuration  = .2;
-p.ISI           = .5;    % duration between response and next trial onset
+p.stimDuration  = .5;
+p.ISI           = 2;    % duration between response and next trial onset
 p.contrast      = 1;
 p.tf            = 4;    % Drifting temporal frequency in Hz
 p.sf            = 1.5;    % Spatial frequency in cycles/degree
@@ -143,10 +143,16 @@ sf      = p.sf / ppd;    % cycles per pixel
 phasePerFrame = 360 * p.tf / p.ScreenFrameRate;     % phase drift per frame
 E = [e 0;0 -e;-e 0;0 e];        % Creating Eccentricity matrix ( amount of displacement for x and y)
 
+% Fixation cross
+fixCrossDimPix = 20;        % Here we set the size of the arms of our fixation cross
+lineWidthPix = 4;           % Width of the line in pixel
+xCoords = [-fixCrossDimPix fixCrossDimPix 0 0];
+yCoords = [0 0 -fixCrossDimPix fixCrossDimPix];
+fixCross = [xCoords; yCoords];
 fixRect = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixati55on point
 % Initialize a table to set up experimental conditions
 p.resLabel = {'trialIndex' 'targetOrientation' 'stimuliPosition' 'respCorrect' 'respTime' };
-targetOrientation       = 20:5:70;    % Target orientation varies from 25 to 65 of step 2
+targetOrientation       = 20:10:70;    % Target orientation varies from 25 to 65 of step 2
 targetOrientation = Shuffle(repmat(targetOrientation,1,repCond));  % create a vectro of orientation for all trials
 nTrials = length(targetOrientation);    % number of tirals
 distractorOrientation   = [35,55];    % Distractor orientation is either 35 or 55
@@ -158,7 +164,7 @@ res(:, 1)                           = 1 : nTrials;    % Label the trial type num
 
 % Generate the stimulus texture
 text =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
-    m+100, m+100, [.5 .5 .5 .5],m,.5,[],[],[]);
+    m+100, m+100, [.5 .5 .5 .5],m,[],[],[],[]);
 params = [0 sf p.contrast 0];  % Dfining parameters for the grating
 
 % Prioritize display to optimize display timing
@@ -179,10 +185,10 @@ KbWait;
 % Select left-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 0);
 % Draw left stim:
-Screen('FillOval',windowPtr,[0 0 0],fixRect);
+Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
 % Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
-Screen('FillOval',windowPtr,[0 0 0],fixRect);
+Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
 Screen('DrawingFinished', windowPtr);
 t0 = Screen('Flip', windowPtr);
 flag = 0; % If 1, break the loop and escape
@@ -210,11 +216,11 @@ switch BinocularCond
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
                     % Draw left stim:
-                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
 
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'],orient_vect, [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
@@ -231,21 +237,21 @@ switch BinocularCond
                         % Select left-eye image buffer for drawing:
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
                         % Draw left stim:
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
 
                         % Select right-eye image buffer for drawing:
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
                         Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'],orient_vect, [], [],...
                             [], [], [], params');
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawingFinished', windowPtr);
                         % each new computation occurs fast enough to show
                         % all nFrames at the framerate
                         onset = Screen('Flip', windowPtr);
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawingFinished', windowPtr);
                         t0 = Screen('Flip', windowPtr);
                     end
@@ -313,12 +319,12 @@ switch BinocularCond
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'],orient_vect, [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr,t0 + p.ISI);
 
@@ -329,20 +335,20 @@ switch BinocularCond
                         % change phase
                         % Select left-eye image buffer for drawing:
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'],orient_vect, [], [],...
                             [], [], [], params');
                         % Select right-eye image buffer for drawing:
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawingFinished', windowPtr);
                         % each new computation occurs fast enough to show
                         % all nFrames at the framerate
                         Screen('Flip', windowPtr);
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawingFinished', windowPtr);
                         t0 = Screen('Flip', windowPtr);
                     end
@@ -407,12 +413,12 @@ switch BinocularCond
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs],orient_vect(1:end-1), [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'],orient_vect(end), [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
@@ -425,20 +431,20 @@ switch BinocularCond
                         % change phase
                         % Select left-eye image buffer for drawing:
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs],orient_vect(1:end-1), [], [],...
                             [], [], [], params');
                         % Select right-eye image buffer for drawing:
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'],orient_vect(end), [], [],...
                             [], [], [], params');
                         Screen('DrawingFinished', windowPtr);
                         Screen('Flip', windowPtr);
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawingFinished', windowPtr);
                         t0 = Screen('Flip', windowPtr);
                     end
@@ -502,12 +508,12 @@ switch BinocularCond
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'],orient_vect(end), [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs],orient_vect(1:end-1), [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
@@ -520,20 +526,20 @@ switch BinocularCond
                         % change phase
                         % Select left-eye image buffer for drawing:
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'],orient_vect(end), [], [],...
                             [], [], [], params');
                         % Select right-eye image buffer for drawing:
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs],orient_vect(1:end-1), [], [],...
                             [], [], [], params');
                         Screen('DrawingFinished', windowPtr);
                         Screen('Flip', windowPtr);
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('FillOval',windowPtr,[0 0 0],fixRect);
+                        Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('DrawingFinished', windowPtr);
                         t0 = Screen('Flip', windowPtr);
                     end
