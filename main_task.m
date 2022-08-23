@@ -62,8 +62,6 @@ p.ScreenGamma = 2; % from monitor calibration
 p.maxLuminance = 100; % from monitor calibration
 p.ScreenBackground = 0.5;
 
-
-
 % Open the display window, set up lookup table, and hide the  mouse cursor
 if exist('onCleanup', 'class'), oC_Obj = onCleanup(@()sca); end
 % close any pre-existing PTB Screen window
@@ -106,7 +104,6 @@ PsychColorCorrection( 'SetEncodingGamma', windowPtr,1/ p.ScreenGamma);
 % set Gamma for all color channels
 
 HideCursor; % Hide the mouse cursor
-ShowCursor
 
 % Get frame rate and set screen font
 p.ScreenFrameRate = FrameRate(windowPtr);
@@ -126,11 +123,11 @@ p.stimSize      = 1.5;  % In visual angle
 p.stimDistance  = 3;
 p.eccentricity  = 4.8;
 p.stimDuration  = .5;
-p.ISI           = 2;    % duration between response and next trial onset
+p.ISI           = 2;     % duration between response and next trial onset
 p.contrast      = 1;
-p.tf            = 4;    % Drifting temporal frequency in Hz
-p.sf            = 1.5;    % Spatial frequency in cycles/degree
-numCrowd        = 6;    % number of crowding stimuli
+p.tf            = 4;     % Drifting temporal frequency in Hz
+p.sf            = 1.5;   % Spatial frequency in cycles/degree
+numCrowd        = 6;     % number of crowding stimuli
 
 
 % Compute stimulus parameters
@@ -144,34 +141,34 @@ phasePerFrame = 360 * p.tf / p.ScreenFrameRate;     % phase drift per frame
 E = [e 0;0 -e;-e 0;0 e];        % Creating Eccentricity matrix ( amount of displacement for x and y)
 
 % Fixation cross
-fixCrossDimPix = 20;        % Here we set the size of the arms of our fixation cross
-lineWidthPix = 4;           % Width of the line in pixel
-xCoords = [-fixCrossDimPix fixCrossDimPix 0 0];
-yCoords = [0 0 -fixCrossDimPix fixCrossDimPix];
-fixCross = [xCoords; yCoords];
-fixRect = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixati55on point
+fixCrossDimPix          = 20;        % Here we set the size of the arms of our fixation cross
+lineWidthPix            = 4;           % Width of the line in pixel
+xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];
+yCoords                 = [0 0 -fixCrossDimPix fixCrossDimPix];
+fixCross                = [xCoords; yCoords];
+fixRect                 = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixati55on point
 % Initialize a table to set up experimental conditions
-p.resLabel = {'trialIndex' 'targetOrientation' 'stimuliPosition' 'respCorrect' 'respTime' };
+p.resLabel              = {'trialIndex' 'targetOrientation' 'stimuliPosition' 'respCorrect' 'respTime' };
 targetOrientation       = 20:10:70;    % Target orientation varies from 25 to 65 of step 2
-targetOrientation = Shuffle(repmat(targetOrientation,1,repCond));  % create a vectro of orientation for all trials
-nTrials = length(targetOrientation);    % number of tirals
+targetOrientation       = Shuffle(repmat(targetOrientation,1,repCond));  % create a vectro of orientation for all trials
+nTrials                 = length(targetOrientation);    % number of tirals
 distractorOrientation   = [35,55];    % Distractor orientation is either 35 or 55
 stimuliPositin          = [1 2 3 4];  % Stimulus positoin is in one the four cardinal directin in the visula field
 
 % Initiate response table
-res                                 = nan(nTrials, length(p.resLabel));     % matrix res is nTrials x 5 of NaN
-res(:, 1)                           = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
+res                      = nan(nTrials, length(p.resLabel));     % matrix res is nTrials x 5 of NaN
+res(:, 1)                = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
 
 % Generate the stimulus texture
-text =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
-    m+100, m+100, [.5 .5 .5 .5],m,[],[],[],[]);
-params = [0 sf p.contrast 0];  % Dfining parameters for the grating
+text                    =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
+                            m+100, m+100, [.5 .5 .5 .5],m,[],[],[],[]);
+params                  = [0 sf p.contrast 0];  % Dfining parameters for the grating
 
 % Prioritize display to optimize display timing
 Priority(MaxPriority(windowPtr));
 
 % Start experiment with instructions
-str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
+str                     = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
 
 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
 % Draw instruction text string centered in window
@@ -190,8 +187,8 @@ Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
 Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
 Screen('DrawingFinished', windowPtr);
-t0 = Screen('Flip', windowPtr);
-flag = 0; % If 1, break the loop and escape
+t0      = Screen('Flip', windowPtr);
+flag    = 0; % If 1, break the loop and escape
 switch BinocularCond
     case 'monoocular'
         switch DominantEye
@@ -247,7 +244,6 @@ switch BinocularCond
                         Screen('DrawingFinished', windowPtr);
                         % each new computation occurs fast enough to show
                         % all nFrames at the framerate
-                        onset = Screen('Flip', windowPtr);
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
                         Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
@@ -344,7 +340,6 @@ switch BinocularCond
                         Screen('DrawingFinished', windowPtr);
                         % each new computation occurs fast enough to show
                         % all nFrames at the framerate
-                        Screen('Flip', windowPtr);
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
                         Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
@@ -440,7 +435,6 @@ switch BinocularCond
                         Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'],orient_vect(end), [], [],...
                             [], [], [], params');
                         Screen('DrawingFinished', windowPtr);
-                        Screen('Flip', windowPtr);
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
                         Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
@@ -535,7 +529,6 @@ switch BinocularCond
                         Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs],orient_vect(1:end-1), [], [],...
                             [], [], [], params');
                         Screen('DrawingFinished', windowPtr);
-                        Screen('Flip', windowPtr);
                         Screen('SelectStereoDrawBuffer', windowPtr, 0);
                         Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
                         Screen('SelectStereoDrawBuffer', windowPtr, 1);
