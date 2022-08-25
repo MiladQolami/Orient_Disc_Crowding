@@ -56,11 +56,11 @@ if stereoMode == 10
     % opened on 'slaveScreen':
     PsychImaging('AddTask', 'General', 'DualWindowStereo', slaveScreen);
 end
-p.ScreenDistance = 50; % in centimeter
-p.ScreenHeight = 19; % in centimeter
-p.ScreenGamma = 2; % from monitor calibration
-p.maxLuminance = 100; % from monitor calibration
-p.ScreenBackground = 0.5;
+CR.ScreenDistance = 50; % in centimeter
+CR.ScreenHeight = 19; % in centimeter
+CR.ScreenGamma = 2.2; % from monitor calibration
+CR.maxLuminance = 100; % from monitor calibration
+CR.ScreenBackground = 0.5;
 
 % Open the display window, set up lookup table, and hide the  mouse cursor
 if exist('onCleanup', 'class'), oC_Obj = onCleanup(@()sca); end
@@ -85,7 +85,10 @@ PsychImaging('AddTask', 'General', 'EnablePseudoGrayOutput' );
 PsychImaging( 'AddTask' , 'FinalFormatting','DisplayColorCorrection' , 'SimpleGamma' );
 % setup Gamma correction method using simple power  function for all color channels
 
-[windowPtr p.ScreenRect] = PsychImaging( 'OpenWindow'  , scrnNum, p.ScreenBackground, [], [], [], stereoMode);
+[windowPtr CR.ScreenRect] = PsychImaging( 'OpenWindow'  , scrnNum, CR.ScreenBackground, [], [], [], stereoMode);
+
+% Enable alpha-blending
+Screen('BlendFunction', windowPtr, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 
 if ismember(stereoMode, [4, 5])
     % This uncommented bit of code would allow to exercise the
@@ -98,57 +101,59 @@ end
 
 [screenXpixels, screenYpixels] = Screen('WindowSize', windowPtr); % size of open window
 
-[xCenter, yCenter]  = RectCenter(p.ScreenRect); % center of the open window
+[xCenter, yCenter]  = RectCenter(CR.ScreenRect); % center of the open window
 
-PsychColorCorrection( 'SetEncodingGamma', windowPtr,1/ p.ScreenGamma);
+PsychColorCorrection( 'SetEncodingGamma', windowPtr,1/ CR.ScreenGamma);
 % set Gamma for all color channels
 
 HideCursor; % Hide the mouse cursor
 
 % Get frame rate and set screen font
-p.ScreenFrameRate = FrameRate(windowPtr);
+CR.ScreenFrameRate = FrameRate(windowPtr);
+monitorFlipInterval =Screen('GetFlipInterval', windowPtr)
 % get current frame rate
-Screen( 'TextFont', windowPtr, 'Times' );
-% set the font for the screen to Times
 Screen( 'TextSize', windowPtr, 20); % set the font size
 % for the screen to 24
 %% Experiment module
 
 % Specify general experiment parameters
 repCond         = 3;   % number of repetition for each conditin, this determines number ot trials
-p.randSeed      = ClockRandSeed;
+CR.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
-p.stimSize      = 1.5;  % In visual angle
-p.stimDistance  = 3;
-p.eccentricity  = 4.8;
-p.stimDuration  = .5;
-p.ISI           = 2;     % duration between response and next trial onset
-p.contrast      = 1;
-p.tf            = 4;     % Drifting temporal frequency in Hz
-p.sf            = 1.5;   % Spatial frequency in cycles/degree
+CR.stimSize      = 2;  % In visual angle
+CR.stimDistance  = 3;
+CR.eccentricity  = 4.8;
+CR.stimDuration  = 5;
+CR.ISI           = 1;     % duration between response and next trial onset
+CR.contrast      = 1;
+CR.tf            = 2;     % Drifting temporal frequency in Hz
+CR.sf            = 4;   % Spatial frequency in cycles/degree
 numCrowd        = 6;     % number of crowding stimuli
 
 
 % Compute stimulus parameters
-ppd     = pi/180 * p.ScreenDistance / p.ScreenHeight * p.ScreenRect(4);     % pixels per degree
-nFrames = round(p.stimDuration * p.ScreenFrameRate);    % # stimulus frames
-m       = 2 * round(p.stimSize * ppd / 2);    % horizontal and vertical stimulus size in pixels
-d       = 2 * round(p.stimDistance * ppd / 2); % stimulus distance in pixel
-e       = 2 * round(p.eccentricity * ppd / 2);  % stimulus eccentricity in pixel
-sf      = p.sf / ppd;    % cycles per pixel
-phasePerFrame = 360 * p.tf / p.ScreenFrameRate;     % phase drift per frame
+ppd     = pi/180 * CR.ScreenDistance / CR.ScreenHeight * CR.ScreenRect(4);     % pixels per degree
+nFrames = round(CR.stimDuration * CR.ScreenFrameRate);    % # stimulus frames
+m       = 2 * round(CR.stimSize * ppd / 2);    % horizontal and vertical stimulus size in pixels
+d       = 2 * round(CR.stimDistance * ppd / 2); % stimulus distance in pixel
+e       = 2 * round(CR.eccentricity * ppd / 2);  % stimulus eccentricity in pixel
+sf      = CR.sf / ppd;    % cycles per pixel
+phasePerFrame = 360 * CR.tf / CR.ScreenFrameRate;     % phase drift per frame
 E = [e 0;0 -e;-e 0;0 e];        % Creating Eccentricity matrix ( amount of displacement for x and y)
 
-% Fixation cross
-fixCrossDimPix          = 20;        % Here we set the size of the arms of our fixation cross
-lineWidthPix            = 4;           % Width of the line in pixel
+% Nonuis cross
+fixCrossSize            = .4;                             % size of each arm in visual angle
+fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);      
+lineWidthPix            = 6;                             % Width of the line in pixel
 xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];
-yCoords                 = [0 0 -fixCrossDimPix fixCrossDimPix];
-fixCross                = [xCoords; yCoords];
-fixRect                 = CenterRect([0 0 1 1] * 8, p.ScreenRect);   % 8 x 8 fixati55on point
+yCoordsUp               = [0 0 -fixCrossDimPix 0];
+yCoordsDown             = [0 0 0 fixCrossDimPix];
+fixCrossLeft            = [xCoords; yCoordsUp];         % Coordinates of fixation cross
+fixCrossRight           = [xCoords; yCoordsDown];       % Coordinates of fixation cross
+
 % Initialize a table to set up experimental conditions
-p.resLabel              = {'trialIndex' 'targetOrientation' 'stimuliPosition' 'respCorrect' 'respTime' };
+CR.resLabel              = {'trialIndex' 'targetOrientation' 'stimuliPosition' 'respCorrect' 'respTime' };
 targetOrientation       = 20:10:70;    % Target orientation varies from 25 to 65 of step 2
 targetOrientation       = Shuffle(repmat(targetOrientation,1,repCond));  % create a vectro of orientation for all trials
 nTrials                 = length(targetOrientation);    % number of tirals
@@ -156,13 +161,20 @@ distractorOrientation   = [35,55];    % Distractor orientation is either 35 or 5
 stimuliPositin          = [1 2 3 4];  % Stimulus positoin is in one the four cardinal directin in the visula field
 
 % Initiate response table
-res                      = nan(nTrials, length(p.resLabel));     % matrix res is nTrials x 5 of NaN
+res                      = nan(nTrials, length(CR.resLabel));     % matrix res is nTrials x 5 of NaN
 res(:, 1)                = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
 
 % Generate the stimulus texture
+radius = m/2;   % radius of disc edge
+% smoothing sigma in pixel
+sigma = 10;
+% use alpha channel for smoothing?
+useAlpha = true;
+% smoothing method: cosine (0) or smoothstep (1) or inverse smoothstep (2)
+smoothMethod = 1;
 text                    =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
-                            m+100, m+100, [.5 .5 .5 .5],m,[],[],[],[]);
-params                  = [0 sf p.contrast 0];  % Dfining parameters for the grating
+    m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
+params                  = [0 sf CR.contrast 0];  % Dfining parameters for the grating
 
 % Prioritize display to optimize display timing
 Priority(MaxPriority(windowPtr));
@@ -182,10 +194,10 @@ KbWait;
 % Select left-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 0);
 % Draw left stim:
-Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
 % Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
-Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
 Screen('DrawingFinished', windowPtr);
 t0      = Screen('Flip', windowPtr,[],1);
 flag    = 0; % If 1, break the loop and escape
@@ -208,33 +220,33 @@ switch BinocularCond
                     res(trial_i,3) = stimulusPosition;
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E(stimulusPosition,:);
-                    p.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-                    p.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
+                    CR.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
                     % Draw left stim:
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
-                    Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'],orient_vect, [], [],...
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs CR.targetLocs'],orient_vect, [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
 
                     % this part indicates when present stimuli if response
                     % key is pressed or not 
                     if any(secs)
-                        t1 = Screen('Flip', windowPtr,secs + p.ISI);
+                        t1 = Screen('Flip', windowPtr,secs + CR.ISI);
                     else
-                        t1 = Screen('Flip', windowPtr,t0 + p.ISI);
+                        t1 = Screen('Flip', windowPtr,t0 + CR.ISI);
                     end
 
-                    WaitSecs(p.stimDuration);
+                    WaitSecs(CR.stimDuration);
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr);
                     WiatTime = 5;       % Wait for response
@@ -300,28 +312,28 @@ switch BinocularCond
                     res(trial_i,3) = stimulusPosition;
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E(stimulusPosition,:);
-                    p.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-                    p.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
+                    CR.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
-                    Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs p.targetLocs'],orient_vect, [], [],...
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs CR.targetLocs'],orient_vect, [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawingFinished', windowPtr);
                     if any(secs)
-                        t1 = Screen('Flip', windowPtr,secs + p.ISI);
+                        t1 = Screen('Flip', windowPtr,secs + CR.ISI);
                     else
-                        t1 = Screen('Flip', windowPtr,t0 + p.ISI);
+                        t1 = Screen('Flip', windowPtr,t0 + CR.ISI);
                     end
-                    WaitSecs(p.stimDuration);
+                    WaitSecs(CR.stimDuration);
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr);
                     WiatTime = 5;       % Wait for response
@@ -381,30 +393,30 @@ switch BinocularCond
                     res(trial_i,3) = stimulusPosition;
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E(stimulusPosition,:);
-                    p.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-                    p.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
+                    CR.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
-                    Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs],orient_vect(1:end-1), [], [],...
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs],orient_vect(1:end-1), [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
-                    Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'],orient_vect(end), [], [],...
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawTextures', windowPtr, text, [], [CR.targetLocs'],orient_vect(end), [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
                    if any(secs)
-                        t1 = Screen('Flip', windowPtr,secs + p.ISI);
+                        t1 = Screen('Flip', windowPtr,secs + CR.ISI);
                     else
-                        t1 = Screen('Flip', windowPtr,t0 + p.ISI);
+                        t1 = Screen('Flip', windowPtr,t0 + CR.ISI);
                     end
-                    WaitSecs(p.stimDuration);
+                    WaitSecs(CR.stimDuration);
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr);
                     WiatTime = 5;       % Wait for response
@@ -462,30 +474,30 @@ switch BinocularCond
                     res(trial_i,3) = stimulusPosition;
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E(stimulusPosition,:);
-                    p.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-                    p.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
+                    CR.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
-                    Screen('DrawTextures', windowPtr, text, [], [p.targetLocs'],orient_vect(end), [], [],...
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawTextures', windowPtr, text, [], [CR.targetLocs'],orient_vect(end), [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
-                    Screen('DrawTextures', windowPtr, text, [], [p.crowdingLocs],orient_vect(1:end-1), [], [],...
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs],orient_vect(1:end-1), [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
                     if any(secs)
-                        t1 = Screen('Flip', windowPtr,secs + p.ISI);
+                        t1 = Screen('Flip', windowPtr,secs + CR.ISI);
                     else
-                        t1 = Screen('Flip', windowPtr,t0 + p.ISI);
+                        t1 = Screen('Flip', windowPtr,t0 + CR.ISI);
                     end
-                    WaitSecs(p.stimDuration);
+                    WaitSecs(CR.stimDuration);
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCross,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr);
                     WiatTime = 5;       % Wait for response
@@ -530,7 +542,7 @@ switch BinocularCond
                 end
         end
 end
-p.finish = datestr(now); % record finish time
+CR.finish = datestr(now); % record finish time
 % save DriftingSinewave_rst.mat rec p; % save the results
 % sca;
 %% System Reinstatement Module

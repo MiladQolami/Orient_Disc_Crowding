@@ -1,5 +1,8 @@
 %%%% This code was written by Milad Qolami %%%%%
 %%%% Binocular combination task %%%%%%%%%
+% cd('C:\toolbox\Psychtoolbox')
+% SetupPsychtoolbox
+%%
 clc;
 clear;
 close all;
@@ -44,7 +47,7 @@ if stereoMode == 10
 end
 BC.ScreenDistance = 50; % in centimeter
 BC.ScreenHeight = 19; % in centimeter
-BC.ScreenGamma = 2; % from monitor calibration
+BC.ScreenGamma = 2.2; % from monitor calibration
 BC.maxLuminance = 100; % from monitor calibration
 BC.ScreenBackground = 0.5;
 
@@ -99,9 +102,7 @@ HideCursor; % Hide the mouse cursor
 BC.ScreenFrameRate = FrameRate(windowPtr);
 monitorFlipInterval =Screen('GetFlipInterval', windowPtr)
 % get current frame rate
-Screen( 'TextFont', windowPtr, 'Times' );
-% set the font for the screen to Times
-Screen( 'TextSize', windowPtr, 20); % set the font size
+Screen( 'TextSize', windowPtr, 15); % set the font size
 % for the screen to 24
 
 %% %% Experiment module
@@ -111,13 +112,14 @@ BC.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
 BC.stimSize      = 2;       % In visual angle
-BC.eccentricity  = 5;
+BC.eccentricity  = 4.5;
 BC.stimDuration  = 5;
-BC.ISI           = 2;       % duration between response and next trial onset
+BC.ISI           = 1;       % duration between response and next trial onset
 BC.contrast      = 1;
 BC.tf            = 1.5;     % Drifting temporal frequency in Hz
-BC.sf            = 4;       % Spatial frequency in cycles/degree
+BC.sf            = 2;       % Spatial frequency in cycles/degree
 nTrials          = 6;       % Must be even
+
 % Compute stimulus parameters
 ppd     = pi/180 * BC.ScreenDistance / BC.ScreenHeight * BC.ScreenRect(4);     % pixels per degree
 nFrames = round(BC.stimDuration * BC.ScreenFrameRate);    % # stimulus frames
@@ -125,23 +127,28 @@ m       = 2 * round(BC.stimSize * ppd / 2);    % horizontal and vertical stimulu
 e       = 2 * round(BC.eccentricity * ppd / 2);  % stimulus eccentricity in pixel
 sf      = BC.sf / ppd;    % cycles per pixel
 phasePerFrame = 360 * BC.tf / BC.ScreenFrameRate;     % phase drift per frame
-E = [e 0;0 -e;-e 0;0 e];        % Creating Eccentricity matrix ( amount of displacement for x and y)
 
 % Nonuis cross
-fixCrossDimPix          = 25;        % Here we set the size of the arms of our fixation cross
-lineWidthPix            = 8;           % Width of the line in pixel
+fixCrossSize            = .4;                             % size of each arm in visual angle
+fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);      
+lineWidthPix            = 6;                             % Width of the line in pixel
 xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];
 yCoordsUp               = [0 0 -fixCrossDimPix 0];
 yCoordsDown             = [0 0 0 fixCrossDimPix];
-fixCrossLeft            = [xCoords; yCoordsUp];       % Coordinates of fixation cross
+fixCrossLeft            = [xCoords; yCoordsUp];         % Coordinates of fixation cross
 fixCrossRight           = [xCoords; yCoordsDown];       % Coordinates of fixation cross
 
-StimulusPosition        = [xCenter+e-m-50, yCenter+e-m-50, xCenter+e+m+50 yCenter+e+m+50];
+% Define the destination rectangles for our stimulus. This will be
+% the same size as the window we use to view our texture.
+baseRect = [0 0 m m];
+StimulusPosition = CenterRectOnPointd(baseRect, xCenter+e, yCenter+e);
+
 % Initialize a table to set up experimental conditions
 BC.resLabel              = {'trialIndex' 'LeftEyeOrientation' 'RightEyeOrientation' 'ResponseOrientataion' 'ResponseTime' }; % 37 is left,38 is up and 39 is right
 Response                 = nan(nTrials, length(BC.resLabel));     % matrix res is nTrials x 5 of NaN
+Response(:,1)            = 1:nTrials;
 Orientations             = [repmat([35 55],nTrials/2,1);repmat([55 35],nTrials/2,1)]; % Orientatin of grating presented to left and right eye
-Response(:,2:3)                = Orientations(Shuffle(1:nTrials),:)
+Response(:,2:3)           = Orientations(Shuffle(1:nTrials),:);
 
 % Generate the stimulus texture
 radius = m/2;   % radius of disc edge
@@ -159,9 +166,8 @@ params                  = [0 sf BC.contrast 0];  % Dfining parameters for the gr
 Priority(MaxPriority(windowPtr));
 
 % Start experiment with instructions
-str                     = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
-
-DrawFormattedText(windowPtr, str, 'center', 'center', 1);
+str                     = sprintf('Left/Right arrow keys for orientation.\n\n\n Press SPACE to start.'  );
+DrawFormattedText(windowPtr, str, 'center', 'center',1, [], 1);
 % Draw instruction text string centered in window
 
 Screen( 'Flip', windowPtr);
@@ -234,7 +240,7 @@ for trial_i = 1:nTrials
                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
                 % Draw instruction text string centered in window
                 Screen( 'Flip', windowPtr);
-                WaitSecs(.5);
+                WaitSecs(.2);
                 [keyIsDown, ~, keyCode] = KbCheck; % make sure all keys are rleased
                 % wait for either space for resume or
                 % escape for terminating the task
