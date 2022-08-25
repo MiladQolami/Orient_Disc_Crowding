@@ -8,14 +8,14 @@ clear;
 close all;
 % Inputs
 SubjectID = input('Inter subject ID:');
-DominantEye = input("Which Eye is dominant (either 'right' or 'left'? : ","s");
-while ~any(strcmp(DominantEye,{'right','left'}))
-    DominantEye = input("Which Eye is dominant (either 'right' or 'left'? : ","s");
+DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'? : ","s");
+while ~any(strcmp(DominantEye,{'Right','Left'}))
+    DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'? : ","s");
 end
 
-BinocularCond = input("Which binocular condition? (either 'binocular' or 'monoocular'):","s");
-while ~any(strcmp(BinocularCond,{'binocular','monoocular'}))
-    BinocularCond = input("Which binocular condition? (either 'binocular' or 'monoocular'):","s");
+BinocularCond = input("Which binocular condition? (either 'Binocular' or 'Monocular'):","s");
+while ~any(strcmp(BinocularCond,{'Binocular','Monocular'}))
+    BinocularCond = input("Which binocular condition? (either 'Binocular' or 'Monocular'):","s");
 end
 %% Display setup module
 % Define display parameters
@@ -85,7 +85,7 @@ PsychImaging('AddTask', 'General', 'EnablePseudoGrayOutput' );
 PsychImaging( 'AddTask' , 'FinalFormatting','DisplayColorCorrection' , 'SimpleGamma' );
 % setup Gamma correction method using simple power  function for all color channels
 
-[windowPtr CR.ScreenRect] = PsychImaging( 'OpenWindow'  , scrnNum, CR.ScreenBackground, [], [], [], stereoMode);
+[windowPtr,CR.ScreenRect] = PsychImaging( 'OpenWindow'  , scrnNum, CR.ScreenBackground, [], [], [], stereoMode);
 
 % Enable alpha-blending
 Screen('BlendFunction', windowPtr, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
@@ -110,7 +110,7 @@ HideCursor; % Hide the mouse cursor
 
 % Get frame rate and set screen font
 CR.ScreenFrameRate = FrameRate(windowPtr);
-monitorFlipInterval =Screen('GetFlipInterval', windowPtr)
+monitorFlipInterval = Screen('GetFlipInterval', windowPtr);
 % get current frame rate
 Screen( 'TextSize', windowPtr, 20); % set the font size
 % for the screen to 24
@@ -121,16 +121,16 @@ repCond         = 3;   % number of repetition for each conditin, this determines
 CR.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
-CR.stimSize      = 2;  % In visual angle
-CR.stimDistance  = 3;
+CR.stimSize      = 1;  % In visual angle
+CR.stimDistance  = 1.8;
 CR.eccentricity  = 4.8;
-CR.stimDuration  = 5;
+CR.stimDuration  = .250;
 CR.ISI           = 1;     % duration between response and next trial onset
 CR.contrast      = 1;
 CR.tf            = 2;     % Drifting temporal frequency in Hz
 CR.sf            = 4;   % Spatial frequency in cycles/degree
-numCrowd        = 6;     % number of crowding stimuli
-
+numCrowd         = 6;     % number of crowding stimuli
+FrameSquareSizeAngle = 15;     % Size of the fusional frame square in anlge
 
 % Compute stimulus parameters
 ppd     = pi/180 * CR.ScreenDistance / CR.ScreenHeight * CR.ScreenRect(4);     % pixels per degree
@@ -141,6 +141,7 @@ e       = 2 * round(CR.eccentricity * ppd / 2);  % stimulus eccentricity in pixe
 sf      = CR.sf / ppd;    % cycles per pixel
 phasePerFrame = 360 * CR.tf / CR.ScreenFrameRate;     % phase drift per frame
 E = [e 0;0 -e;-e 0;0 e];        % Creating Eccentricity matrix ( amount of displacement for x and y)
+FrameSquareSizePixel = 2 * round(FrameSquareSizeAngle * ppd / 2);
 
 % Nonuis cross
 fixCrossSize            = .4;                             % size of each arm in visual angle
@@ -152,6 +153,13 @@ yCoordsDown             = [0 0 0 fixCrossDimPix];
 fixCrossLeft            = [xCoords; yCoordsUp];         % Coordinates of fixation cross
 fixCrossRight           = [xCoords; yCoordsDown];       % Coordinates of fixation cross
 
+% Create a frame square as peripheral fusion lock
+% Make a base Rect of 200 by 200 pixels
+FrameSquareSizePixels = [0 0 FrameSquareSizePixel FrameSquareSizePixel];
+FrameSquarePosition = CenterRectOnPointd(FrameSquareSizePixels, xCenter, yCenter);
+penWidthPixels = 6;% Pen width for the frames
+
+
 % Initialize a table to set up experimental conditions
 CR.resLabel              = {'trialIndex' 'targetOrientation' 'stimuliPosition' 'respCorrect' 'respTime' };
 targetOrientation       = 20:10:70;    % Target orientation varies from 25 to 65 of step 2
@@ -161,8 +169,8 @@ distractorOrientation   = [35,55];    % Distractor orientation is either 35 or 5
 stimuliPositin          = [1 2 3 4];  % Stimulus positoin is in one the four cardinal directin in the visula field
 
 % Initiate response table
-res                      = nan(nTrials, length(CR.resLabel));     % matrix res is nTrials x 5 of NaN
-res(:, 1)                = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
+Response                      = nan(nTrials, length(CR.resLabel));     % matrix res is nTrials x 5 of NaN
+Response(:, 1)                = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
 
 % Generate the stimulus texture
 radius = m/2;   % radius of disc edge
@@ -194,18 +202,22 @@ KbWait;
 % Select left-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 0);
 % Draw left stim:
-Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+
 % Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
-Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 Screen('DrawingFinished', windowPtr);
 t0      = Screen('Flip', windowPtr,[],1);
 flag    = 0; % If 1, break the loop and escape
 secs = 0; % initiate 'secs' variable, presenting time of stimuli if no response key was pressed
+CR.start = datestr(now); % record finish time
 switch BinocularCond
-    case 'monoocular'
+    case 'Monocular'
         switch DominantEye
-            case 'right'
+            case 'Right'
                 for trial_i = 1:nTrials
                     % if flag is 1 break the loop and escape the task
                     if flag
@@ -214,10 +226,10 @@ switch BinocularCond
                     % Create a matrix of orientation for distractor and for
                     % target(random)
                     orient_vect = [repmat(distractorOrientation,1,numCrowd/2) targetOrientation(trial_i)];
-                    res(trial_i,2) = orient_vect(end);
+                    Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
                     stimulusPosition = stimuliPositin(randi(4,1));
-                    res(trial_i,3) = stimulusPosition;
+                    Response(trial_i,3) = stimulusPosition;
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E(stimulusPosition,:);
                     CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
@@ -225,11 +237,14 @@ switch BinocularCond
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+
                     % Draw left stim:
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs CR.targetLocs'],orient_vect, [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
@@ -244,26 +259,28 @@ switch BinocularCond
 
                     WaitSecs(CR.stimDuration);
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr);
                     WiatTime = 5;       % Wait for response
                     while KbCheck; end % To make sure all keys are released
                     TrialEnd = GetSecs;
                     while GetSecs < TrialEnd + WiatTime
-                        [keyIsDown1 secs keyCode]= KbCheck;
+                        [keyIsDown1, secs, keyCode]= KbCheck;
                         if keyIsDown1    % if key is pressed it's response or space or escape; do proper action
                             % correct resposnse
-                            if (res(trial_i,2) >= 45 && strcmp(KbName(keyCode),'RightArrow')) || ((res(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'LeftArrow')))
-                                res(trial_i,4) = 1;
-                                res(trial_i,5) = secs - TrialEnd;
+                            if (Response(trial_i,2) >= 45 && strcmp(KbName(keyCode),'RightArrow')) || ((Response(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'LeftArrow')))
+                                Response(trial_i,4) = 1;
+                                Response(trial_i,5) = secs - TrialEnd;
                                 Beeper;break
                                 % incoreccet response
-                            elseif (res(trial_i,2) >=  45 && strcmp(KbName(keyCode),'LeftArrow')) || ((res(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'RightArrow')))
-                                res(trial_i,4) = 0;
-                                res(trial_i,5) = secs - TrialEnd;
+                            elseif (Response(trial_i,2) >=  45 && strcmp(KbName(keyCode),'LeftArrow')) || ((Response(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'RightArrow')))
+                                Response(trial_i,4) = 0;
+                                Response(trial_i,5) = secs - TrialEnd;
                                 break
                                 % space is pressed iether for some rest or for
                                 % terminating the task
@@ -286,8 +303,8 @@ switch BinocularCond
                                     end
                                 end % end of inside while loop
                             end
-                            res(trial_i,4) = 99;
-                            res(trial_i,5) = 99;
+                            Response(trial_i,4) = 99;
+                            Response(trial_i,5) = 99;
                             t0 = secs;
                         elseif ~keyIsDown1
                             secs = 0;
@@ -299,17 +316,17 @@ switch BinocularCond
                     % If flag is 1 which means 'escape' was pressed end
                     % session
                 end
-            case 'left'
+            case 'Left'
                 for trial_i = 1:nTrials
                     if flag
                         break
                     end
                     flag = 0; % For escaping session
                     orient_vect = [repmat(distractorOrientation,1,numCrowd/2) targetOrientation(trial_i)];
-                    res(trial_i,2) = orient_vect(end);
+                    Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
                     stimulusPosition = stimuliPositin(randi(4,1));
-                    res(trial_i,3) = stimulusPosition;
+                    Response(trial_i,3) = stimulusPosition;
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E(stimulusPosition,:);
                     CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
@@ -317,12 +334,14 @@ switch BinocularCond
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs CR.targetLocs'],orient_vect, [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawingFinished', windowPtr);
                     if any(secs)
                         t1 = Screen('Flip', windowPtr,secs + CR.ISI);
@@ -331,24 +350,26 @@ switch BinocularCond
                     end
                     WaitSecs(CR.stimDuration);
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr);
                     WiatTime = 5;       % Wait for response
                     while KbCheck; end % To make sure all keys are released
                     TrialEnd = GetSecs;
                     while GetSecs < TrialEnd + WiatTime
-                        [keyIsDown1 secs keyCode]= KbCheck;
+                        [keyIsDown1, secs, keyCode]= KbCheck;
                         if keyIsDown1
-                            if (res(trial_i,2) >= 45 && strcmp(KbName(keyCode),'RightArrow')) || ((res(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'LeftArrow')))
-                                res(trial_i,4) = 1;
-                                res(trial_i,5) = secs - TrialEnd;
+                            if (Response(trial_i,2) >= 45 && strcmp(KbName(keyCode),'RightArrow')) || ((Response(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'LeftArrow')))
+                                Response(trial_i,4) = 1;
+                                Response(trial_i,5) = secs - TrialEnd;
                                 Beeper;break
-                            elseif (res(trial_i,2) >=  45 && strcmp(KbName(keyCode),'LeftArrow')) || ((res(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'RightArrow')))
-                                res(trial_i,4) = 0;
-                                res(trial_i,5) = secs - TrialEnd;
+                            elseif (Response(trial_i,2) >=  45 && strcmp(KbName(keyCode),'LeftArrow')) || ((Response(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'RightArrow')))
+                                Response(trial_i,4) = 0;
+                                Response(trial_i,5) = secs - TrialEnd;
                                 break
                             elseif strcmp(KbName(keyCode), 'space')
                                 str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
@@ -367,8 +388,8 @@ switch BinocularCond
                                     end
                                 end
                             end
-                            res(trial_i,4) = 99;
-                            res(trial_i,5) = 99;
+                            Response(trial_i,4) = 99;
+                            Response(trial_i,5) = 99;
                             
                         end
                         if flag,break,end
@@ -378,19 +399,19 @@ switch BinocularCond
                     % session
                 end
         end
-    case 'binocular'
+    case 'Binocular'
         switch DominantEye
-            case 'right'
+            case 'Right'
                 for trial_i = 1:nTrials
                     if flag
                         break
                     end
                     flag = 0; % For escaping session
                     orient_vect = [repmat(distractorOrientation,1,numCrowd/2) targetOrientation(trial_i)];
-                    res(trial_i,2) = orient_vect(end);
+                    Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
                     stimulusPosition = stimuliPositin(randi(4,1));
-                    res(trial_i,3) = stimulusPosition;
+                    Response(trial_i,3) = stimulusPosition;
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E(stimulusPosition,:);
                     CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
@@ -398,13 +419,15 @@ switch BinocularCond
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs],orient_vect(1:end-1), [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
-                    Screen('DrawTextures', windowPtr, text, [], [CR.targetLocs'],orient_vect(end), [], [],...
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                    Screen('DrawTextures', windowPtr, text, [], CR.targetLocs',orient_vect(end), [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
                    if any(secs)
@@ -414,24 +437,26 @@ switch BinocularCond
                     end
                     WaitSecs(CR.stimDuration);
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr);
                     WiatTime = 5;       % Wait for response
                     while KbCheck; end % To make sure all keys are released
                     TrialEnd = GetSecs;
                     while GetSecs < TrialEnd + WiatTime
-                        [keyIsDown secs keyCode]= KbCheck;
+                        [keyIsDown, secs, keyCode]= KbCheck;
                         if keyIsDown
-                            if (res(trial_i,2) >= 45 && strcmp(KbName(keyCode),'RightArrow')) || ((res(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'LeftArrow')))
-                                res(trial_i,4) = 1;
-                                res(trial_i,5) = secs - TrialEnd;
+                            if (Response(trial_i,2) >= 45 && strcmp(KbName(keyCode),'RightArrow')) || ((Response(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'LeftArrow')))
+                                Response(trial_i,4) = 1;
+                                Response(trial_i,5) = secs - TrialEnd;
                                 Beeper;break
-                            elseif (res(trial_i,2) >=  45 && strcmp(KbName(keyCode),'LeftArrow')) || ((res(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'RightArrow')))
-                                res(trial_i,4) = 0;
-                                res(trial_i,5) = secs - TrialEnd;
+                            elseif (Response(trial_i,2) >=  45 && strcmp(KbName(keyCode),'LeftArrow')) || ((Response(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'RightArrow')))
+                                Response(trial_i,4) = 0;
+                                Response(trial_i,5) = secs - TrialEnd;
                                 break
                             elseif strcmp(KbName(keyCode), 'space')
                                 str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
@@ -450,8 +475,8 @@ switch BinocularCond
                                     end
                                 end
                             end
-                            res(trial_i,4) = 99;
-                            res(trial_i,5) = 99;
+                            Response(trial_i,4) = 99;
+                            Response(trial_i,5) = 99;
                         end
                         if flag,break,end
                     end
@@ -459,7 +484,7 @@ switch BinocularCond
                     % If flag is 1 which means 'escape' was pressed end
                     % session
                 end
-            case 'left'
+            case 'Left'
                 for trial_i = 1:nTrials
                     if flag
                         break
@@ -468,10 +493,10 @@ switch BinocularCond
                     % Get orientation of sinewave for each trial from
                     % response table
                     orient_vect = [repmat(distractorOrientation,1,numCrowd/2) targetOrientation(trial_i)];
-                    res(trial_i,2) = orient_vect(end);
+                    Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
                     stimulusPosition = stimuliPositin(randi(4,1));
-                    res(trial_i,3) = stimulusPosition;
+                    Response(trial_i,3) = stimulusPosition;
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E(stimulusPosition,:);
                     CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
@@ -479,12 +504,14 @@ switch BinocularCond
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
-                    Screen('DrawTextures', windowPtr, text, [], [CR.targetLocs'],orient_vect(end), [], [],...
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                    Screen('DrawTextures', windowPtr, text, [], CR.targetLocs',orient_vect(end), [], [],...
                         [], [], [], params');
                     % Select right-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs],orient_vect(1:end-1), [], [],...
                         [], [], [], params');
                     Screen('DrawingFinished', windowPtr);
@@ -495,24 +522,26 @@ switch BinocularCond
                     end
                     WaitSecs(CR.stimDuration);
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, [], [xCenter, yCenter]);
+                    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix,0, [xCenter, yCenter]);
+                    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
                     Screen('DrawingFinished', windowPtr);
                     Screen('Flip', windowPtr);
                     WiatTime = 5;       % Wait for response
                     while KbCheck; end % To make sure all keys are released
                     TrialEnd = GetSecs;
                     while GetSecs < TrialEnd + WiatTime
-                        [keyIsDown secs keyCode]= KbCheck;
+                        [keyIsDown, secs, keyCode]= KbCheck;
                         if keyIsDown
-                            if (res(trial_i,2) >= 45 && strcmp(KbName(keyCode),'RightArrow')) || ((res(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'LeftArrow')))
-                                res(trial_i,4) = 1;
-                                res(trial_i,5) = secs - TrialEnd;
+                            if (Response(trial_i,2) >= 45 && strcmp(KbName(keyCode),'RightArrow')) || ((Response(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'LeftArrow')))
+                                Response(trial_i,4) = 1;
+                                Response(trial_i,5) = secs - TrialEnd;
                                 Beeper;break
-                            elseif (res(trial_i,2) >=  45 && strcmp(KbName(keyCode),'LeftArrow')) || ((res(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'RightArrow')))
-                                res(trial_i,4) = 0;
-                                res(trial_i,5) = secs - TrialEnd;
+                            elseif (Response(trial_i,2) >=  45 && strcmp(KbName(keyCode),'LeftArrow')) || ((Response(trial_i,2) <= 45 && strcmp(KbName(keyCode), 'RightArrow')))
+                                Response(trial_i,4) = 0;
+                                Response(trial_i,5) = secs - TrialEnd;
                                 break
                             elseif strcmp(KbName(keyCode), 'space')
                                 str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
@@ -531,8 +560,8 @@ switch BinocularCond
                                     end
                                 end
                             end
-                            res(trial_i,4) = 99;
-                            res(trial_i,5) = 99;
+                            Response(trial_i,4) = 99;
+                            Response(trial_i,5) = 99;
                         end
                         if flag,break,end
                     end
@@ -543,7 +572,8 @@ switch BinocularCond
         end
 end
 CR.finish = datestr(now); % record finish time
-% save DriftingSinewave_rst.mat rec p; % save the results
+filename = strcat(num2str(123), '_' ,DominantEye, '_' ,BinocularCond);
+save (filename ,'Response', 'CR'); % save the results
 % sca;
 %% System Reinstatement Module
 Priority(0); % restore priority
