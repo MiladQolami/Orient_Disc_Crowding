@@ -120,6 +120,8 @@ BC.tf            = 1.5;     % Drifting temporal frequency in Hz
 BC.sf            = 2;       % Spatial frequency in cycles/degree
 nTrials          = 2;       % Must be even
 trialLength      = 10;      % Duration of a trial in secs
+FrameSquareSizeAngle = 15;     % Size of the fusional frame square in anlge
+
 % Compute stimulus parameters
 ppd     = pi/180 * BC.ScreenDistance / BC.ScreenHeight * BC.ScreenRect(4);     % pixels per degree
 nFrames = round(BC.stimDuration * BC.ScreenFrameRate);    % # stimulus frames
@@ -127,6 +129,8 @@ m       = 2 * round(BC.stimSize * ppd / 2);    % horizontal and vertical stimulu
 e       = 2 * round(BC.eccentricity * ppd / 2);  % stimulus eccentricity in pixel
 sf      = BC.sf / ppd;    % cycles per pixel
 phasePerFrame = 360 * BC.tf / BC.ScreenFrameRate;     % phase drift per frame
+FrameSquareSizePixel = 2 * round(FrameSquareSizeAngle * ppd / 2);
+
 
 % Nonuis cross
 fixCrossSize            = .4;                             % size of each arm in visual angle
@@ -142,6 +146,22 @@ fixCrossRight           = [xCoords; yCoordsDown];       % Coordinates of fixatio
 % the same size as the window we use to view our texture.
 baseRect = [0 0 m m];
 StimulusPosition = CenterRectOnPointd(baseRect, xCenter+e, yCenter+e);
+
+% Nonuis cross
+fixCrossSize            = .4;                             % size of each arm in visual angle
+fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);      
+lineWidthPix            = 6;                             % Width of the line in pixel
+xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];
+yCoordsUp               = [0 0 -fixCrossDimPix 0];
+yCoordsDown             = [0 0 0 fixCrossDimPix];
+fixCrossLeft            = [xCoords; yCoordsUp];         % Coordinates of fixation cross
+fixCrossRight           = [xCoords; yCoordsDown];       % Coordinates of fixation cross
+
+% Create a frame square as peripheral fusion lock
+% Make a base Rect of 200 by 200 pixels
+FrameSquareSizePixels = [0 0 FrameSquareSizePixel FrameSquareSizePixel];
+FrameSquarePosition = CenterRectOnPointd(FrameSquareSizePixels, xCenter, yCenter);
+penWidthPixels = 6;% Pen width for the frames
 
 % Initialize a table to set up experimental conditions
 BC.resLabel            = {'trialIndex' 'LeftEyeOrientation' 'RightEyeOrientation' 'ResponseOrientataion' 'ResponseTime' }; % 37 is left,38 is up and 39 is right
@@ -183,9 +203,11 @@ KbWait;
 Screen('SelectStereoDrawBuffer', windowPtr, 0);
 % Draw left stim:
 Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 % Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
 Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 Screen('DrawingFinished', windowPtr);
 t0      = Screen('Flip', windowPtr);
 flag    = 0; % If 1, break the loop and escape
@@ -201,10 +223,12 @@ for trial_i = 1:nTrials
         Screen('SelectStereoDrawBuffer', windowPtr, 0);
         % Draw left stim:
         Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix,0, [xCenter, yCenter]);
+        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
         Screen('DrawTexture', windowPtr, text, [], StimulusPosition, Response{trial_i,2}, [], [],[], [], [], params);
         % Select right-eye image buffer for drawing:
         Screen('SelectStereoDrawBuffer', windowPtr, 1);
         Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
         Screen('DrawTexture', windowPtr, text, [], StimulusPosition, Response{trial_i,3}, [], [],...
             [], [], [], params);
         Screen('DrawingFinished', windowPtr);
