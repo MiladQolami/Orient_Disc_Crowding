@@ -6,6 +6,4 @@ The first task is **Binocular combinatin** in which ....
 
 The second task is **Orientation discrimination** 
 
-b
-
 For codes, results, & figures, see **referece to article**
