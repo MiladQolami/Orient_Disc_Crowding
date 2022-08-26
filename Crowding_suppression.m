@@ -122,7 +122,7 @@ CR.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
 CR.stimSize      = 1;  % In visual angle
-CR.stimDistance  = 1.8;
+CR.stimDistance  = 1.3;
 CR.eccentricity  = 4.8;
 CR.stimDuration  = .250;
 CR.ISI           = 1;     % duration between response and next trial onset
@@ -577,5 +577,3 @@ save (filename ,'Response', 'CR'); % save the results
 % sca;
 %% System Reinstatement Module
 Priority(0); % restore priority
-sca; % close display window and textures,
-% and restore the original color lookup table
