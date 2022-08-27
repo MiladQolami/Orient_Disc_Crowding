@@ -1,2 +1,9 @@
-# Orientation discrimination task under crwoding condition and interocular suppression
-The code for orientation discrimination task under crowding condition
+# Information pass through interocular suppression and affects object recognition
+
+This repository contians MATLAB codes for two tasks used in  **title of the article** 
+
+The first task is **Binocular combinatin** in which ....
+
+The second task is **Orientation discrimination** 
+
+For codes, results, & figures, see **referece to article**
