@@ -1,7 +1,7 @@
 % cd('C:\toolbox\Psychtoolbox')
 % SetupPsychtoolbox
 %%
-%%%%%%%%%%%%%% Orientation Discrimination Task under Crowding %%%%%%%%%%%
+%%%%%%%%%%%%%% Orientation Discrimination under Crowding and interocular suppression %%%%%%%%%%%
 % This code was written by Milad Qolami
 clc;
 clear;
@@ -22,40 +22,6 @@ end
 scrnNum     = max(Screen('Screens'));
 stereoMode  = 4; % Define the mode for stereodisply
 
-% Windows-Hack: If mode 4 or 5 is requested, we select screen zero
-% as target screen: This will open a window that spans multiple
-% monitors on multi-display setups, which is usually what one wants
-% for this mode.
-if IsWin && (stereoMode==4 || stereoMode==5)
-    scrnNum = 0;
-end
-% Dual display dual-window stereo requested?
-if stereoMode == 10
-    % Yes. Do we have at least two separate displays for both views?
-    if length(Screen('Screens')) < 2
-        error('Sorry, for stereoMode 10 you''ll need at least 2 separate display screens in non-mirrored mode.');
-    end
-
-    if ~IsWin
-        % Assign left-eye view (the master window) to main display:
-        scrnNum = 0;
-    else
-        % Assign left-eye view (the master window) to main display:
-        scrnNum = 1;
-    end
-end
-if stereoMode == 10
-    % In dual-window, dual-display mode, we open the slave window on
-    % the secondary screen:
-    if IsWin
-        slaveScreen = 2;
-    else
-        slaveScreen = 1;
-    end
-    % The 2nd window for output of the right-eye view should be
-    % opened on 'slaveScreen':
-    PsychImaging('AddTask', 'General', 'DualWindowStereo', slaveScreen);
-end
 CR.ScreenDistance = 50; % in centimeter
 CR.ScreenHeight = 19; % in centimeter
 CR.ScreenGamma = 2.2; % from monitor calibration
@@ -67,9 +33,6 @@ if exist('onCleanup', 'class'), oC_Obj = onCleanup(@()sca); end
 % close any pre-existing PTB Screen window
 
 % Prepare setup of imaging pipeline for onscreen window.
-
-% Check that Psychtoolbox is properly installed, switch to unified KbName's
-% across operating systems, and switch color range to normalized 0 - 1 range:
 PsychDefaultSetup(2);
 Screen('Preference', 'SkipSyncTests', 1);
 PsychImaging( 'PrepareConfiguration'); % First step in starting  pipeline
@@ -90,15 +53,6 @@ PsychImaging( 'AddTask' , 'FinalFormatting','DisplayColorCorrection' , 'SimpleGa
 % Enable alpha-blending
 Screen('BlendFunction', windowPtr, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 
-if ismember(stereoMode, [4, 5])
-    % This uncommented bit of code would allow to exercise the
-    % SetStereoSideBySideParameters() function, which allows to change
-    % presentation parameters for dual-display / side-by-side stereo modes 4
-    % and 5:
-    % "Shrink display a bit to the center": SetStereoSideBySideParameters(windowPtr, [0.25, 0.25], [0.75, 0.5], [1, 0.25], [0.75, 0.5]);
-    % Restore defaults: SetStereoSideBySideParameters(windowPtr, [0, 0], [1, 1], [1, 0], [1, 1]);
-end
-
 [screenXpixels, screenYpixels] = Screen('WindowSize', windowPtr); % size of open window
 
 [xCenter, yCenter]  = RectCenter(CR.ScreenRect); % center of the open window
@@ -117,77 +71,64 @@ Screen( 'TextSize', windowPtr, 20); % set the font size
 %% Experiment module
 
 % Specify general experiment parameters
-repCond         = 3;   % number of repetition for each conditin, this determines number of trials
 CR.randSeed      = ClockRandSeed;
+CR.stimSize      = 1;                % In visual angle
+CR.stimDistance  = 1.4;              % Distance from target to flankers
+CR.eccentricity  = 5;                % Eccentricity of stimuli
+CR.stimDuration  = 0.200;            % Stimulus Duration
+CR.ISI           = 0.500;            % Time between response and next trial onset
+CR.contrast      = 1;                % Contrast of gratings
+CR.sf            = 4;                % Spatial frequency in cycles/degree
+CR.numCrowd         = 6;             % Number of crowding stimuli
+CR.repCond         = 3;              % number of repetition for each condition, this specifies number of trials
+CR.FrameSquareSizeAngle = 16;        % Size of the fusional frame square in anlge
 
-% Specify the stimulus
-CR.stimSize      = 1;  % In visual angle
-CR.stimDistance  = 1.4;
-CR.eccentricity  = 5;
-CR.stimDuration  = .250;
-CR.ISI           = 1;     % duration between response and next trial onset
-CR.contrast      = 0;
-CR.tf            = 2;     % Drifting temporal frequency in Hz
-CR.sf            = 4;   % Spatial frequency in cycles/degree
-numCrowd         = 6;     % number of crowding stimuli
-FrameSquareSizeAngle = 16;     % Size of the fusional frame square in anlge
 
 % Compute stimulus parameters
-ppd     = pi/180 * CR.ScreenDistance / CR.ScreenHeight * CR.ScreenRect(4);     % pixels per degree
-nFrames = round(CR.stimDuration * CR.ScreenFrameRate);    % # stimulus frames
-m       = 2 * round(CR.stimSize * ppd / 2);    % horizontal and vertical stimulus size in pixels
-d       = 2 * round(CR.stimDistance * ppd / 2); % stimulus distance in pixel
-e       = 2 * round(CR.eccentricity * ppd / 2);  % stimulus eccentricity in pixel
-sf      = CR.sf / ppd;    % cycles per pixel
-phasePerFrame = 360 * CR.tf / CR.ScreenFrameRate;     % phase drift per frame
-E = [-e,e];        % Creating Eccentricity vector (center of a rectanvle wherethe stimuli will be presented)
-FrameSquareSizePixel = 2 * round(FrameSquareSizeAngle * ppd / 2);% Size of the fusional frame square in pixel
-
-% % Define the destination rectangles for our stimulus. This will be
-% % the same size as the window we use to view our texture.
-% baseRect = [0 0 m m];
-% StimulusPosition = CenterRectOnPointd(baseRect, xCenter-e, yCenter+e); % the stimuli will be dispalayed in right and down in visual field (mirror inversion)
+ppd           = pi/180 * CR.ScreenDistance / CR.ScreenHeight * CR.ScreenRect(4);     % Pixels per degree
+m             = 2 * round(CR.stimSize * ppd / 2);                                    % Horizontal and vertical stimulus size in pixels
+d             = 2 * round(CR.stimDistance * ppd / 2);                                % Stimuli distance in pixel
+e             = 2 * round(CR.eccentricity * ppd / 2);                                % Stimulus eccentricity in pixel
+sf            = CR.sf / ppd;                                                         % Cycles per pixel
+E             = [-e,e];                                                              % Creating Eccentricity vector (center of a rectangle where the stimuli will be presented)
+FrameSquareSizePixel = 2 * round(CR.FrameSquareSizeAngle * ppd / 2);                 % Size of the fusional frame square in pixel
 
 
-% Nonuis cross
-fixCrossSize            = .4;                             % size of each arm in visual angle
-fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);      
-lineWidthPix            = 6;                             % Width of the line in pixel
-xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];
-yCoordsUp               = [0 0 -fixCrossDimPix 0];
-yCoordsDown             = [0 0 0 fixCrossDimPix];
-fixCrossLeft            = [xCoords; yCoordsUp];         % Coordinates of fixation cross
-fixCrossRight           = [xCoords; yCoordsDown];       % Coordinates of fixation cross
+
+% Nonuis cross (central fusion lock)
+fixCrossSize            = 0.4;                                   % Size of each arm in visual angle
+fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);    
+lineWidthPix            = 6;                                     % Width of the line in pixel
+xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];  % X coordination of linse
+yCoordsUp               = [0 0 -fixCrossDimPix 0];               % Y coordinates of upper half of vertical arms (presented to left eye)
+yCoordsDown             = [0 0 0 fixCrossDimPix];                % Y coordinates of lower half of vertical arms (presented to right eye)
+fixCrossLeft            = [xCoords; yCoordsUp];                  % Coordinates of fixation cross
+fixCrossRight           = [xCoords; yCoordsDown];                % Coordinates of fixation cross
 
 % Create a frame square as peripheral fusion lock
-% Make a base Rect of 200 by 200 pixels
-FrameSquareSizePixels = [0 0 FrameSquareSizePixel FrameSquareSizePixel];
-FrameSquarePosition = CenterRectOnPointd(FrameSquareSizePixels, xCenter, yCenter);
-penWidthPixels = 6;% Pen width for the frames
+FrameSquareSizePixels = [0 0 FrameSquareSizePixel FrameSquareSizePixel]; % A base fram square
+FrameSquarePosition   = CenterRectOnPointd(FrameSquareSizePixels, xCenter, yCenter); % Center it where we want
+penWidthPixels        = 6;  % Pen width for the frames
 
 
-% Initialize a table to set up experimental conditions
+% Initialize a table to initialize
 CR.resLabel              = {'trialIndex' 'targetOrientation' 'respCorrect' 'respTime' 'catchTrial' };
-targetOrientation       = 60:10:120;    % Target orientation varies from 25 to 65 of step 2
-targetOrientation       = Shuffle(repmat(targetOrientation,1,repCond));  % create a vectro of orientation for all trials
-nTrials                 = length(targetOrientation);    % number of tirals
-distractorOrientation   = [80,100];    % Distractor orientation is either 35 or 55
-catchTrial = Shuffle([zeros(2*nTrials/3,1) ;ones(nTrials/3,1)]); % if one, it is a catch trial
-% Initiate response table
-Response                      = nan(nTrials, length(CR.resLabel));     % matrix res is nTrials x 5 of NaN
-Response(:, 1)                = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
+targetOrientation        = 60:10:120;    % Target orientation varies from 25 to 65 of step 2
+targetOrientation        = Shuffle(repmat(targetOrientation,1,CR.repCond));  % create a vectro of orientation for all trials
+nTrials                  = length(targetOrientation);    % number of tirals
+distractorOrientation    = [80,100];    % Distractor orientation is either 35 or 55
+catchTrial               = Shuffle([zeros(2*nTrials/3,1) ;ones(nTrials/3,1)]); % if one, it is a catch trial
+Response                 = nan(nTrials, length(CR.resLabel));     % matrix res is nTrials x 5 of NaN
+Response(:, 1)           = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
 
 % Generate the stimulus texture
-radius = m/2;   % radius of disc edge
-% smoothing sigma in pixel
-sigma = 10;
-% use alpha channel for smoothing?
-useAlpha = true;
-% smoothing method: cosine (0) or smoothstep (1) or inverse smoothstep (2)
-smoothMethod = 1;
-text                    =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
-    m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
-params                  = [0 sf CR.contrast 0];  % Dfining parameters for the grating
+radius           = m/2;                   % radius of disc edge
+sigma            = 10;                    % smoothing sigma in pixel
+useAlpha         = true;                  % use alpha channel for smoothing?
+smoothMethod     = 1;                     % smoothing method: cosine (0) or smoothstep (1) or inverse smoothstep (2)
+text             =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
+                    m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
+params           = [0 sf CR.contrast 0];  % Dfining parameters for the grating
 
 % Prioritize display to optimize display timing
 Priority(MaxPriority(windowPtr));
@@ -205,34 +146,31 @@ Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 Screen('DrawingFinished', windowPtr);
 Screen('Flip', windowPtr);
 KbWait;
+
 % Start experiment with instructions
 WaitSecs(.4);
-str                     = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
-
-DrawFormattedText(windowPtr, str, 'center', 'center', 1);
-% Draw instruction text string centered in window
-
+str = sprintf('Press a key to start' );
+DrawFormattedText(windowPtr, str, 'center', 'center', 1);  % Draw instruction text string centered in window in mirror inverse
 Screen( 'Flip', windowPtr);
-% flip the text image into active buffer
 KbName('UnifyKeyNames');
-RestrictKeysForKbCheck([37,38,39,40,32,27]);
+RestrictKeysForKbCheck([37,38,39,40,32,27]); % Restrict keys to few onse
 KbWait;
 
-% Select left-eye image buffer for drawing:
+% Start by presenting nonius cross and frame square
 Screen('SelectStereoDrawBuffer', windowPtr, 0);
-% Draw left stim:
 Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-
-% Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
 Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 Screen('DrawingFinished', windowPtr);
-t0      = Screen('Flip', windowPtr,[],1);
-flag    = 0; % If 1, break the loop and escape
-secs = 0; % initiate 'secs' variable, presenting time of stimuli if no response key was pressed
-CR.start = datestr(now); % record finish time
+t0      = Screen('Flip', windowPtr,[],1); % Flip and get flip time to present first stimuli after CR.ISI
+flag    = 0;                              % If 1, break the loop and escape
+secs    = 0;                              % initiate 'secs' variable, presenting time of stimuli if no response key was pressed
+CR.start = datestr(now);                  % record finish time
+
+% We present our stimuli in one of the four conditions: monocular an right/
+% monocular and leff/ binocular and right / binocular and left
 switch BinocularCond
     case 'Monocular'
         switch DominantEye
@@ -244,13 +182,13 @@ switch BinocularCond
                     end
                     % Create a matrix of orientation for distractor and for
                     % target(random)
-                    orient_vect = [repmat(distractorOrientation,1,numCrowd/2) targetOrientation(trial_i)];
+                    orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
                     Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E;
                     CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-                    CR.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
@@ -354,14 +292,14 @@ switch BinocularCond
                         break
                     end
                     flag = 0; % For escaping session
-                    orient_vect = [repmat(distractorOrientation,1,numCrowd/2) targetOrientation(trial_i)];
+                    orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
                     Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
 
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E;
                     CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-                    CR.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
@@ -408,11 +346,11 @@ switch BinocularCond
                     while GetSecs < TrialEnd + WiatTime
                         [keyIsDown1, secs, keyCode]= KbCheck;
                         if keyIsDown1
-                            if (Response(trial_i,2) <= 45 && strcmp(KbName(keyCode),'DownArrow')) || ((Response(trial_i,2) >= 45 && strcmp(KbName(keyCode), 'UpArrow')))
+                            if (Response(trial_i,2) <= 90 && strcmp(KbName(keyCode),'DownArrow')) || ((Response(trial_i,2) >= 90 && strcmp(KbName(keyCode), 'UpArrow')))
                                 Response(trial_i,3) = 1;
                                 Response(trial_i,4) = secs - TrialEnd;
                                 Beeper;break
-                            elseif (Response(trial_i,2) <=  45 && strcmp(KbName(keyCode),'UpArrow')) || ((Response(trial_i,2) >= 45 && strcmp(KbName(keyCode), 'DownArrow')))
+                            elseif (Response(trial_i,2) <=  90 && strcmp(KbName(keyCode),'UpArrow')) || ((Response(trial_i,2) >= 90 && strcmp(KbName(keyCode), 'DownArrow')))
                                 Response(trial_i,3) = 0;
                                 Response(trial_i,4) = secs - TrialEnd;
                                 break
@@ -452,13 +390,13 @@ switch BinocularCond
                         break
                     end
                     flag = 0; % For escaping session
-                    orient_vect = [repmat(distractorOrientation,1,numCrowd/2) targetOrientation(trial_i)];
+                    orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
                     Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E;
                     CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-                    CR.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
@@ -546,13 +484,13 @@ switch BinocularCond
                     flag = 0; % For escaping session
                     % Get orientation of sinewave for each trial from
                     % response table
-                    orient_vect = [repmat(distractorOrientation,1,numCrowd/2) targetOrientation(trial_i)];
+                    orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
                     Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
                     % Applying eccentircity
                     StimPosition = [xCenter yCenter] + E;
                     CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-                    CR.crowdingLocs = VisualCrowder(StimPosition,numCrowd, d ,m);
+                    CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
                     params(1) = 360 * rand; % set initial phase randomly
                     % Select left-eye image buffer for drawing:
                     Screen('SelectStereoDrawBuffer', windowPtr, 0);
