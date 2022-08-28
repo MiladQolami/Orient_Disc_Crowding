@@ -6,7 +6,7 @@
 clc;
 clear;
 close all;
-% Inputs
+%% Inputs
 SubjectID = input('Inter subject ID:');
 DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'? : ","s");
 while ~any(strcmp(DominantEye,{'Right','Left'}))
@@ -71,17 +71,17 @@ Screen( 'TextSize', windowPtr, 20); % set the font size
 %% Experiment module
 
 % Specify general experiment parameters
-CR.randSeed      = ClockRandSeed;
-CR.stimSize      = 1;                % In visual angle
-CR.stimDistance  = 1.4;              % Distance from target to flankers
-CR.eccentricity  = 5;                % Eccentricity of stimuli
-CR.stimDuration  = 0.200;            % Stimulus Duration
-CR.ISI           = 0.500;            % Time between response and next trial onset
-CR.contrast      = 1;                % Contrast of gratings
-CR.sf            = 4;                % Spatial frequency in cycles/degree
-CR.numCrowd         = 6;             % Number of crowding stimuli
-CR.repCond         = 3;              % number of repetition for each condition, this specifies number of trials
-CR.FrameSquareSizeAngle = 16;        % Size of the fusional frame square in anlge
+CR.randSeed             = ClockRandSeed;
+CR.stimSize             = 1;                % In visual angle
+CR.stimDistance         = 1.4;              % Distance from target to flankers
+CR.eccentricity         = 5;                % Eccentricity of stimuli
+CR.stimDuration         = 3;                % Stimulus Duration
+CR.ISI                  = 0.500;            % Time between response and next trial onset
+CR.contrast             = 1;                % Contrast of gratings
+CR.sf                   = 4;                % Spatial frequency in cycles/degree
+CR.numCrowd             = 8;                % Number of crowding stimuli
+CR.repCond              = 3;                % number of repetition for each condition, this specifies number of trials
+CR.FrameSquareSizeAngle = 16;               % Size of the fusional frame square in anlge
 
 
 % Compute stimulus parameters
@@ -113,7 +113,7 @@ penWidthPixels        = 6;  % Pen width for the frames
 
 % Initialize a table to initialize
 CR.resLabel              = {'trialIndex' 'targetOrientation' 'respCorrect' 'respTime' 'catchTrial' };
-targetOrientation        = 60:10:120;    % Target orientation varies from 25 to 65 of step 2
+targetOrientation        = 70:2:110;    % Target orientation varies from 25 to 65 of step 2
 targetOrientation        = Shuffle(repmat(targetOrientation,1,CR.repCond));  % create a vectro of orientation for all trials
 nTrials                  = length(targetOrientation);    % number of tirals
 distractorOrientation    = [80,100];    % Distractor orientation is either 35 or 55
@@ -164,9 +164,9 @@ Screen('SelectStereoDrawBuffer', windowPtr, 1);
 Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 Screen('DrawingFinished', windowPtr);
-t0      = Screen('Flip', windowPtr,[],1); % Flip and get flip time to present first stimuli after CR.ISI
-flag    = 0;                              % If 1, break the loop and escape
-secs    = 0;                              % initiate 'secs' variable, presenting time of stimuli if no response key was pressed
+t0       = Screen('Flip', windowPtr,[],1); % Flip and get flip time to present first stimuli after CR.ISI
+flag     = 0;                              % If 1, break the loop and escape
+secs     = 0;                              % initiate 'secs' variable, presenting time of stimuli if no response key was pressed
 CR.start = datestr(now);                  % record finish time
 
 % We present our stimuli in one of the four conditions: monocular an right/
@@ -291,7 +291,6 @@ switch BinocularCond
                     if flag
                         break
                     end
-                    flag = 0; % For escaping session
                     orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
                     Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
@@ -389,7 +388,6 @@ switch BinocularCond
                     if flag
                         break
                     end
-                    flag = 0; % For escaping session
                     orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
                     Response(trial_i,2) = orient_vect(end);
                     % pick a random stimulus posiontion
