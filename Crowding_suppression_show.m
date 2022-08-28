@@ -67,9 +67,9 @@ Screen( 'TextSize', windowPtr, 20); % set the font size
 CR.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
-CR.stimSize      = 1.5;     % In visual angle
-CR.stimDistance  = 2;
-CR.eccentricity  = 4;
+CR.stimSize      = 1.4;     % In visual angle
+CR.stimDistance  = 1.8;
+CR.eccentricity  = 5;
 CR.stimDuration  = 0.200;
 CR.ISI           = 0.500;       % duration between response and next trial onset
 CR.contrast      = 0;
