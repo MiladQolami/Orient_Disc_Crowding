@@ -64,20 +64,19 @@ Screen( 'TextSize', windowPtr, 20); % set the font size
 %% Experiment module
 
 % Specify general experiment parameters
-repCond         = 3;   % number of repetition for each conditin, this determines number of trials
 CR.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
-CR.stimSize      = 1.5;  % In visual angle
-CR.stimDistance  = 2.5;
+CR.stimSize      = 1.5;     % In visual angle
+CR.stimDistance  = 2;
 CR.eccentricity  = 4;
-CR.stimDuration  = .200;
-CR.ISI           = 1;     % duration between response and next trial onset
+CR.stimDuration  = 0.200;
+CR.ISI           = 0.500;       % duration between response and next trial onset
 CR.contrast      = 0;
-CR.tf            = 2;     % Drifting temporal frequency in Hz
-CR.sf            = 4;   % Spatial frequency in cycles/degree
-numCrowd         = 6;     % number of crowding stimuli
-FrameSquareSizeAngle = 18;     % Size of the fusional frame square in anlge
+CR.sf            = 4;       % Spatial frequency in cycles/degree
+repCond          = 10;      % number of repetition for each conditin, this determines number of trials
+numCrowd         = 6;       % number of crowding stimuli
+FrameSquareSizeAngle = 18;  % Size of the fusional frame square in anlge
 
 % Compute stimulus parameters
 ppd     = pi/180 * CR.ScreenDistance / CR.ScreenHeight * CR.ScreenRect(4);     % pixels per degree
@@ -86,7 +85,6 @@ m       = 2 * round(CR.stimSize * ppd / 2);    % horizontal and vertical stimulu
 d       = 2 * round(CR.stimDistance * ppd / 2); % stimulus distance in pixel
 e       = 2 * round(CR.eccentricity * ppd / 2);  % stimulus eccentricity in pixel
 sf      = CR.sf / ppd;    % cycles per pixel
-phasePerFrame = 360 * CR.tf / CR.ScreenFrameRate;     % phase drift per frame
 E = [-e,e];        % Creating Eccentricity vector (center of a rectanvle wherethe stimuli will be presented)
 FrameSquareSizePixel = 2 * round(FrameSquareSizeAngle * ppd / 2);% Size of the fusional frame square in pixel
 
@@ -97,7 +95,7 @@ FrameSquareSizePixel = 2 * round(FrameSquareSizeAngle * ppd / 2);% Size of the f
 
 
 % Nonuis cross
-fixCrossSize            = .4;                             % size of each arm in visual angle
+fixCrossSize            = 0.4;                             % size of each arm in visual angle
 fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);      
 lineWidthPix            = 6;                             % Width of the line in pixel
 xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];
@@ -113,11 +111,11 @@ penWidthPixels = 6;% Pen width for the frames
 
 % Initialize a table to set up experimental conditions
 CR.resLabel              = {'trialIndex' 'targetOrientation' 'respCorrect' 'respTime' 'catchTrial' };
-targetOrientation        = 60:2:120;    % Target orientation varies from 25 to 65 of step 2
+targetOrientation        = 60:1:120;    % Target orientation varies from 25 to 65 of step 2
 targetOrientation        = Shuffle(repmat(targetOrientation,1,repCond));  % create a vectro of orientation for all trials
 nTrials                  = length(targetOrientation);    % number of tirals
 distractorOrientation    = [80,100];    % Distractor orientation is either 35 or 55
-catchTrial               = Shuffle([zeros(2*nTrials/3,1) ;ones(nTrials/3,1)]); % if one, it is a catch trial
+catchTrial               = Shuffle([zeros(round(2*nTrials/3),1) ;ones(round(nTrials/3),1)]); % if one, it is a catch trial
 % Initialize response table
 Response                 = nan(nTrials, length(CR.resLabel));     % matrix res is nTrials x 5 of NaN
 Response(:, 1)           = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
@@ -230,7 +228,7 @@ for trial_i = 1:nTrials
                 % space is pressed iether for some rest or for
                 % terminating the task
             elseif strcmp(KbName(keyCode), 'space')
-                str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
+                str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials '] );
                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
                 % Draw instruction text string centered in window
                 Screen( 'Flip', windowPtr);

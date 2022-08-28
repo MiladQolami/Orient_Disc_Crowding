@@ -8,9 +8,9 @@ clear;
 close all;
 %% Inputs
 SubjectID = input('Inter subject ID:');
-DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'? : ","s");
+DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'?) : ","s");
 while ~any(strcmp(DominantEye,{'Right','Left'}))
-    DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'? : ","s");
+    DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'?) : ","s");
 end
 
 BinocularCond = input("Which binocular condition? (either 'Binocular' or 'Monocular'):","s");
@@ -72,15 +72,15 @@ Screen( 'TextSize', windowPtr, 20); % set the font size
 
 % Specify general experiment parameters
 CR.randSeed             = ClockRandSeed;
-CR.stimSize             = 1;                % In visual angle
-CR.stimDistance         = 1.4;              % Distance from target to flankers
-CR.eccentricity         = 5;                % Eccentricity of stimuli
-CR.stimDuration         = 3;                % Stimulus Duration
+CR.stimSize             = 1.3;                % In visual angle
+CR.stimDistance         = 1.8;              % Distance from target to flankers
+CR.eccentricity         = 4;                % Eccentricity of stimuli
+CR.stimDuration         = 0.200;                % Stimulus Duration
 CR.ISI                  = 0.500;            % Time between response and next trial onset
 CR.contrast             = 1;                % Contrast of gratings
 CR.sf                   = 4;                % Spatial frequency in cycles/degree
-CR.numCrowd             = 8;                % Number of crowding stimuli
-CR.repCond              = 3;                % number of repetition for each condition, this specifies number of trials
+CR.numCrowd             = 6;                % Number of crowding stimuli
+CR.repCond              = 10;                % number of repetition for each condition, this specifies number of trials
 CR.FrameSquareSizeAngle = 16;               % Size of the fusional frame square in anlge
 
 
@@ -113,11 +113,11 @@ penWidthPixels        = 6;  % Pen width for the frames
 
 % Initialize a table to initialize
 CR.resLabel              = {'trialIndex' 'targetOrientation' 'respCorrect' 'respTime' 'catchTrial' };
-targetOrientation        = 70:2:110;    % Target orientation varies from 25 to 65 of step 2
+targetOrientation        = 70:1:110;    % Target orientation varies from 25 to 65 of step 2
 targetOrientation        = Shuffle(repmat(targetOrientation,1,CR.repCond));  % create a vectro of orientation for all trials
 nTrials                  = length(targetOrientation);    % number of tirals
 distractorOrientation    = [80,100];    % Distractor orientation is either 35 or 55
-catchTrial               = Shuffle([zeros(2*nTrials/3,1) ;ones(nTrials/3,1)]); % if one, it is a catch trial
+catchTrial               = Shuffle([zeros(round(2*nTrials/3),1) ;ones(round(nTrials/3),1)]); % if one, it is a catch trial
 Response                 = nan(nTrials, length(CR.resLabel));     % matrix res is nTrials x 5 of NaN
 Response(:, 1)           = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
 
@@ -255,7 +255,7 @@ switch BinocularCond
                                 % space is pressed iether for some rest or for
                                 % terminating the task
                             elseif strcmp(KbName(keyCode), 'space')
-                                str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
+                                str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials ']);
                                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
                                 % Draw instruction text string centered in window
                                 Screen( 'Flip', windowPtr);
@@ -354,7 +354,7 @@ switch BinocularCond
                                 Response(trial_i,4) = secs - TrialEnd;
                                 break
                             elseif strcmp(KbName(keyCode), 'space')
-                                str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
+                                str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials ']);
                                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
                                 % Draw instruction text string centered in window
                                 Screen( 'Flip', windowPtr);
@@ -449,7 +449,7 @@ switch BinocularCond
                                 Response(trial_i,4) = secs - TrialEnd;
                                 break
                             elseif strcmp(KbName(keyCode), 'space')
-                                str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
+                                str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials '] );
                                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
                                 % Draw instruction text string centered in window
                                 Screen( 'Flip', windowPtr);
@@ -543,7 +543,7 @@ switch BinocularCond
                                 Response(trial_i,4) = secs - TrialEnd;
                                 break
                             elseif strcmp(KbName(keyCode), 'space')
-                                str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
+                                str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials ']);
                                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
                                 % Draw instruction text string centered in window
                                 Screen( 'Flip', windowPtr);
