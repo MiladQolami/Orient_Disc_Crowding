@@ -8,8 +8,7 @@ clear;
 close all;
 %% Inputs
 % Specify saving directory
-savedir = uigetdir();
-
+dataSetDir = uigetdir('Where to save data');
 SubjectID = input('Inter subject ID:');
 NDFilter  = input('NDFilter? (1 or 0): ','s');
 DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'?) : ","s");

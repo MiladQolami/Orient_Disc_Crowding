@@ -85,6 +85,7 @@ BC.sf            = 2;       % Spatial frequency in cycles/degree
 nTrials          = 2;       % Must be even
 trialLength      = 10;      % Duration of a trial in secs
 FrameSquareSizeAngle = 18;     % Size of the fusional frame square in anlge
+beep = MakeBeep(400,.5);        % Make a beep to indicate end of trial
 
 % Compute stimulus parameters
 ppd     = pi/180 * BC.ScreenDistance / BC.ScreenHeight * BC.ScreenRect(4);     % pixels per degree
@@ -110,6 +111,10 @@ FrameSquareSizePixels = [0 0 FrameSquareSizePixel FrameSquareSizePixel]; % A bas
 FrameSquarePosition   = CenterRectOnPointd(FrameSquareSizePixels, xCenter, yCenter); % Center it where we want
 penWidthPixels        = 6;  % Pen width for the frames
 
+% Define the destination rectangles for our stimulus. This will be
+% the same size as the window we use to view our texture.
+baseRect = [0 0 m m];
+StimulusPosition = CenterRectOnPointd(baseRect, xCenter+e, yCenter+e);
 
 % Initialize a table to set up experimental conditions
 BC.resLabel            = {'trialIndex' 'LeftEyeOrientation' 'RightEyeOrientation' 'ResponseOrientataion' 'ResponseTime' }; % 37 is left,38 is up and 39 is right
@@ -130,34 +135,36 @@ useAlpha         = true;                  % use alpha channel for smoothing?
 smoothMethod     = 1;                     % smoothing method: cosine (0) or smoothstep (1) or inverse smoothstep (2)
 text             =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
                     m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
-params           = [0 sf CR.contrast 0];  % Dfining parameters for the grating
+params           = [0 sf BC.contrast 0];  % Dfining parameters for the grating
 
 % Prioritize display to optimize display timing
 Priority(MaxPriority(windowPtr));
+
+KbName('UnifyKeyNames');
+RestrictKeysForKbCheck([37,38,39,40,32,27]);
+
+% Starting the experiment
+str = sprintf('Press a key to starat'  );
+DrawFormattedText(windowPtr, str, 'center', 'center',1, [], 1);
+Screen( 'Flip', windowPtr);
+KbWait;
+WaitSecs(.2);
 
 % Alignment task
 % Select left-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 0);
 % Draw left stim:
-Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 1, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 % Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
-Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 1, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 Screen('DrawingFinished', windowPtr);
 Screen('Flip', windowPtr);
 KbWait;
 WaitSecs(.2);
-
-% Start experiment with instructions
-str = sprintf('Press a key to starat'  );
-DrawFormattedText(windowPtr, str, 'center', 'center',1, [], 1);
-Screen( 'Flip', windowPtr);
-
-KbName('UnifyKeyNames');
-RestrictKeysForKbCheck([37,38,39,40,32,27]);
-KbWait;
+CR.start = datestr(now);                  % Record start time
 
 Screen('SelectStereoDrawBuffer', windowPtr, 0);
 Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
@@ -167,93 +174,56 @@ Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 Screen('DrawingFinished', windowPtr);
 t0      = Screen('Flip', windowPtr);
-flag    = 0; % If 1, break the loop and escape
-secs = 0; % initiate 'secs' variable, presenting time of stimuli if no response key was pressed
 
 for trial_i = 1:nTrials
+    Screen('SelectStereoDrawBuffer', windowPtr, 0);
+    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix,0, [xCenter, yCenter]);
+    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+    Screen('DrawTexture', windowPtr, text, [], StimulusPosition, Response{trial_i,2}, [], [],[], [], [], params);
+    Screen('SelectStereoDrawBuffer', windowPtr, 1);
+    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+    Screen('DrawTexture', windowPtr, text, [], StimulusPosition, Response{trial_i,3}, [], [],...
+        [], [], [], params);
+    Screen('DrawingFinished', windowPtr);
+    Screen('Flip', windowPtr,t0 + BC.ISI);
     trialStart = GetSecs;
     pressDurs = []; % initialize a vector for press durations during a tril
-    params(1) = 360 * rand; % set initial phase randomly
 
     while GetSecs < trialStart +trialLength
         % record keyboard pressed and duration
-        Screen('SelectStereoDrawBuffer', windowPtr, 0);
-        Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix,0, [xCenter, yCenter]);
-        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-        Screen('DrawTexture', windowPtr, text, [], StimulusPosition, Response{trial_i,2}, [], [],[], [], [], params);
-        Screen('SelectStereoDrawBuffer', windowPtr, 1);
-        Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
-        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-        Screen('DrawTexture', windowPtr, text, [], StimulusPosition, Response{trial_i,3}, [], [],...
-            [], [], [], params);
-        Screen('DrawingFinished', windowPtr);
-        Screen('Flip', windowPtr,t0 + BC.ISI);
         [pressTime, pressedKey]   = KbWait([],[],trialStart +trialLength);
         releaseTime               = KbReleaseWait([],trialStart +trialLength);
         pressDur                  = releaseTime - pressTime;
         Response{trial_i,4}       = [Response{trial_i,4} pressDur]; % appending duration of key presses to resposne cell
         Response{trial_i,5}       = [Response{trial_i,5} KbName(KbName(pressedKey))];
     end
-
-    WaitSecs(2);
+    Screen('Flip',windowPtr);
+    Snd("Play",beep);
+    KbReleaseWait
+    if trial_i == nTrials, break,end
+    KbWait;
+    % Alignment task
+    % Select left-eye image buffer for drawing:
+    Screen('SelectStereoDrawBuffer', windowPtr, 0);
+    % Draw left stim:
+    Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix,1, [xCenter, yCenter]);
+    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+    % Select right-eye image buffer for drawing:
+    Screen('SelectStereoDrawBuffer', windowPtr, 1);
+    Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 1, [xCenter, yCenter]);
+    Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+    Screen('DrawingFinished', windowPtr);
+    Screen('Flip', windowPtr);
     KbWait;
     WaitSecs(BC.ISI)
 end
 sca;
+CR.finish = datestr(now); % record finish time
 
 % Save results
 filename = strcat('BinCom', num2str(SubjectID), '_' ,DominantEye);
-save (fullfile(savedir,filename),'Response', 'CR'); % save the results
-sca;
+save (fullfile(savedir,filename),'Response', 'BC'); % save the results
     
-%     WaitSecs(BC.stimDuration);
-%     Screen('Flip',windowPtr);
-%     % Select left-eye image buffer for drawing:
-%     Screen('SelectStereoDrawBuffer', windowPtr, 0);
-%     % Draw left stim:
-%     Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
-%     Screen('SelectStereoDrawBuffer', windowPtr, 1);
-%     Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
-%     Screen('DrawingFinished', windowPtr);
-%     Screen('Flip', windowPtr);
-% 
-%     while KbCheck; end % To make sure all keys are released
-%     TrialEnd = GetSecs;
-%     while GetSecs < TrialEnd + WiatTime
-%         [keyIsDown1 secs keyCode]= KbCheck;
-%         if keyIsDown1    % if key is pressed it's response or space or escape; do proper action
-%             % correct resposnse
-%             if ismember(KbName(KbName(keyCode)),[37 38 39])
-%                 Response(trial_i,4) = KbName(KbName(keyCode));
-%                 Beeper;break
-%                 
-%                 % If space is pressed iether for some rest or for
-%                 % terminating the task
-%             elseif strcmp(KbName(keyCode), 'space')
-%                 str = sprintf('Left/Right arrow keys for orientation.\n\n Press SPACE to start.'  );
-%                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
-%                 % Draw instruction text string centered in window
-%                 Screen( 'Flip', windowPtr);
-%                 WaitSecs(.2);
-%                 [keyIsDown, ~, keyCode] = KbCheck; % make sure all keys are rleased
-%                 % wait for either space for resume or
-%                 % escape for terminating the task
-%                 while ~keyIsDown
-%                     [stopButton, ~, keyCode] = KbCheck;
-%                     if strcmp(KbName(keyCode), 'space')
-%                         break
-%                     elseif strcmp(KbName(keyCode), 'ESCAPE')
-%                         flag = 1;
-%                         break
-%                     end
-%                 end % end of inside while loop
-%             end
-%             t0 = secs;
-%         elseif ~keyIsDown1
-%             secs = 0;
-%             t0 = t1 + WiatTime;
-%         end
-%         if flag,break,end % break outside while loop because we don't want to wait for WaitTime
-%     end
-% end
-
+%% System Reinstatement Module
+Priority(0); % restore priority
