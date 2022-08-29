@@ -7,7 +7,11 @@ clc;
 clear;
 close all;
 %% Inputs
+% Specify saving directory
+savedir = uigetdir();
+
 SubjectID = input('Inter subject ID:');
+NDFilter  = input('NDFilter? (1 or 0): ','s');
 DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'?) : ","s");
 while ~any(strcmp(DominantEye,{'Right','Left'}))
     DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'?) : ","s");
@@ -571,8 +575,8 @@ switch BinocularCond
         end
 end
 CR.finish = datestr(now); % record finish time
-filename = strcat(num2str(123), '_' ,DominantEye, '_' ,BinocularCond);
-save (filename ,'Response', 'CR'); % save the results
+filename = strcat('Crowding', num2str(SubjectID), '_' ,DominantEye, '_' ,BinocularCond);
+save (fullfile(savedir,filename),'Response', 'CR'); % save the results
 sca;
 %% System Reinstatement Module
 Priority(0); % restore priority

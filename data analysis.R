@@ -6,7 +6,7 @@ setwd("D:/Orientation Discrimination project/Orient_Disc_Crowding/Data")
 
 data <- read.mat('1001_training.mat')
 
-# convert data from a matrix into a dat frame
+# convert data from a matrix into a data frame
 data <- as.data.frame(data$Response)
 
 crowdTrials <- dplyr::filter(data1,V5==0)
