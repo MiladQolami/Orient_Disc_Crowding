@@ -78,13 +78,13 @@ BC.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
 BC.stimSize      = 3.3;      % In visual angle
-BC.eccentricity  = 5;      % Stimulus eccentricity
+BC.eccentricity  = 0;      % Stimulus eccentricity
 BC.ISI           = 2;        % Interstimulus interval
 BC.contrast      = 1;
 BC.sf            = 2;       % Spatial frequency in cycles/degree
 nTrials          = 2;       % Must be even
 trialLength      = 10;      % Duration of a trial in secs
-FrameSquareSizeAngle = 18;     % Size of the fusional frame square in anlge
+FrameSquareSizeAngle = 10;     % Size of the fusional frame square in anlge
 beep = MakeBeep(400,.5);        % Make a beep to indicate end of trial
 
 % Compute stimulus parameters
@@ -98,7 +98,7 @@ FrameSquareSizePixel = 2 * round(FrameSquareSizeAngle * ppd / 2);% Size of the f
 % Nonuis cross (central fusion lock)
 fixCrossSize            = 0.4;                                   % Size of each arm in visual angle
 fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);    
-lineWidthPix            = 6;                                     % Width of the line in pixel
+lineWidthPix            = 3;                                     % Width of the line in pixel
 xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];  % X coordination of linse
 yCoordsUp               = [0 0 -fixCrossDimPix 0];               % Y coordinates of upper half of vertical arms (presented to left eye)
 yCoordsDown             = [0 0 0 fixCrossDimPix];                % Y coordinates of lower half of vertical arms (presented to right eye)
@@ -119,14 +119,13 @@ StimulusPosition = CenterRectOnPointd(baseRect, xCenter+e, yCenter+e);
 % Initialize a table to set up experimental conditions
 BC.resLabel            = {'trialIndex' 'LeftEyeOrientation' 'RightEyeOrientation' 'ResponseOrientataion' 'ResponseTime' }; % 37 is left,38 is up and 39 is right
 Response               = cell(nTrials, length(BC.resLabel));     % matrix res is nTrials x 5 of NaN
-Orientations           = [repmat([80 110],nTrials/2,1);repmat([110 80],nTrials/2,1)]; % Orientatin of grating presented to left and right eye
+Orientations           = [repmat([80 100],nTrials/2,1);repmat([100 80],nTrials/2,1)]; % Orientatin of grating presented to left and right eye
 Orientations           = Orientations(Shuffle(1:nTrials),:);
 for i=1:nTrials
-    Response{i,1}          = 1:nTrials;
+    Response{i,1}          = i;
     Response{i,2}          = Orientations(i,1);
     Response{i,3}          = Orientations(i,2);
 end
-
 
 % Generate the stimulus texture
 radius           = m/2;                   % radius of disc edge

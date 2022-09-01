@@ -25,6 +25,40 @@ end
 scrnNum     = max(Screen('Screens'));
 stereoMode  = 4; % Define the mode for stereodisply
 
+% Windows-Hack: If mode 4 or 5 is requested, we select screen zero
+% as target screen: This will open a window that spans multiple
+% monitors on multi-display setups, which is usually what one wants
+% for this mode.
+if IsWin && (stereoMode==4 || stereoMode==5)
+    scrnNum = 0;
+end
+% Dual display dual-window stereo requested?
+if stereoMode == 10
+    % Yes. Do we have at least two separate displays for both views?
+    if length(Screen('Screens')) < 2
+        error('Sorry, for stereoMode 10 you''ll need at least 2 separate display screens in non-mirrored mode.');
+    end
+
+    if ~IsWin
+        % Assign left-eye view (the master window) to main display:
+        scrnNum = 0;
+    else
+        % Assign left-eye view (the master window) to main display:
+        scrnNum = 1;
+    end
+end
+if stereoMode == 10
+    % In dual-window, dual-display mode, we open the slave window on
+    % the secondary screen:
+    if IsWin
+        slaveScreen = 2;
+    else
+        slaveScreen = 1;
+    end
+    % The 2nd window for output of the right-eye view should be
+    % opened on 'slaveScreen':
+    PsychImaging('AddTask', 'General', 'DualWindowStereo', slaveScreen);
+end
 CR.ScreenDistance = 50; % in centimeter
 CR.ScreenHeight = 19; % in centimeter
 CR.ScreenGamma = 2.2; % from monitor calibration
@@ -75,15 +109,15 @@ Screen( 'TextSize', windowPtr, 20); % set the font size
 
 % Specify general experiment parameters
 CR.randSeed             = ClockRandSeed;
-CR.stimSize             = 1.3;                % In visual angle
+CR.stimSize             = 1.3;              % In visual angle
 CR.stimDistance         = 1.8;              % Distance from target to flankers
 CR.eccentricity         = 4;                % Eccentricity of stimuli
-CR.stimDuration         = 0.200;                % Stimulus Duration
+CR.stimDuration         = 0.200;            % Stimulus Duration
 CR.ISI                  = 0.500;            % Time between response and next trial onset
 CR.contrast             = 1;                % Contrast of gratings
 CR.sf                   = 4;                % Spatial frequency in cycles/degree
 CR.numCrowd             = 6;                % Number of crowding stimuli
-CR.repCond              = 10;                % number of repetition for each condition, this specifies number of trials
+CR.repCond              = 10;               % number of repetition for each condition, this specifies number of trials
 CR.FrameSquareSizeAngle = 16;               % Size of the fusional frame square in anlge
 
 
