@@ -117,7 +117,7 @@ CR.stimSize             = 1.3;              % In visual angle
 CR.stimDistance         = 1.8;              % Distance from target to flankers
 CR.eccentricity         = 4;                % Eccentricity of stimuli
 CR.stimDuration         = 0.200;            % Stimulus Duration
-CR.ISI                  = 0.500;            % Time between response and next trial onset
+CR.ISI                  = 1;                % Time between response and next trial onset
 CR.contrast             = 1;                % Contrast of gratings
 CR.sf                   = 4;                % Spatial frequency in cycles/degree
 CR.numCrowd             = 6;                % Number of crowding stimuli
@@ -138,7 +138,7 @@ FrameSquareSizePixel = 2 * round(CR.FrameSquareSizeAngle * ppd / 2);            
 
 % Nonuis cross (central fusion lock)
 fixCrossSize            = 0.4;                                   % Size of each arm in visual angle
-fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);    
+fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);
 lineWidthPix            = 6;                                     % Width of the line in pixel
 xCoords                 = [-fixCrossDimPix fixCrossDimPix 0 0];  % X coordination of linse
 yCoordsUp               = [0 0 -fixCrossDimPix 0];               % Y coordinates of upper half of vertical arms (presented to left eye)
@@ -168,7 +168,7 @@ sigma            = 10;                    % smoothing sigma in pixel
 useAlpha         = true;                  % use alpha channel for smoothing?
 smoothMethod     = 1;                     % smoothing method: cosine (0) or smoothstep (1) or inverse smoothstep (2)
 text             =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
-                    m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
+    m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
 params           = [0 sf CR.contrast 0];  % Dfining parameters for the grating
 
 % Prioritize display to optimize display timing
@@ -178,11 +178,11 @@ Priority(MaxPriority(windowPtr));
 % Select left-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 0);
 % Draw left stim:
-Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 1, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 % Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
-Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 1, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 Screen('DrawingFinished', windowPtr);
 Screen('Flip', windowPtr);
@@ -208,10 +208,9 @@ Screen('DrawingFinished', windowPtr);
 t0       = Screen('Flip', windowPtr,[],1); % Flip and get flip time to present first stimuli after CR.ISI
 flag     = 0;                              % If 1, break the loop and escape
 secs     = 0;                              % initiate 'secs' variable, presenting time of stimuli if no response key was pressed
-CR.start = datestr(now);                  % record finish time
+CR.start = datestr(now);                   % record finish time
 
-% We present our stimuli in one of the four conditions: monocular an right/
-% monocular and leff/ binocular and right / binocular and left
+% We present our stimuli either in monocualr or dichopting viewing
 switch BinocularCond
     case 'Monocular'
         for trial_i = 1:nTrials
@@ -240,7 +239,8 @@ switch BinocularCond
             Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
             Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
 
-            % incorporating catch trials
+            % incorporating catch trials by setting contrast to 0 to hide
+            % distractors
             if catchTrial(trial_i) == 1 % if it is a catch trial make distractors disappear
                 Response(trial_i,5) = 1;
                 params(3) = 0;
@@ -258,11 +258,11 @@ switch BinocularCond
                 [], [], [], params');
             Screen('DrawingFinished', windowPtr);
 
-            % this part indicates when present stimuli if response
-            % key is pressed or not
-            if any(secs)
+            % this part indicates when to present stimuli if response
+            % if a response key was pressed in the last trial
+            if any(secs)   % When a key was pressed
                 t1 = Screen('Flip', windowPtr,secs + CR.ISI);
-            else
+            else        % when subject did not respond
                 t1 = Screen('Flip', windowPtr,t0 + CR.ISI);
             end
 
@@ -276,7 +276,7 @@ switch BinocularCond
             Screen('DrawingFinished', windowPtr);
             Screen('Flip', windowPtr);
             WiatTime = 5;       % Wait for response
-            while KbCheck; end % To make sure all keys are released
+            while KbCheck; end  % To make sure all keys are released
             TrialEnd = GetSecs;
             while GetSecs < TrialEnd + WiatTime
                 [keyIsDown1, secs, keyCode]= KbCheck;
@@ -294,16 +294,32 @@ switch BinocularCond
                         % space is pressed iether for some rest or for
                         % terminating the task
                     elseif strcmp(KbName(keyCode), 'space')
-                        str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials ']);
-                        DrawFormattedText(windowPtr, str, 'center', 'center', 1);
+                        Trial_count = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials ']);
+                        DrawFormattedText(windowPtr, Trial_count, 'center', 'center', 1);
                         % Draw instruction text string centered in window
                         Screen( 'Flip', windowPtr);
-                        WaitSecs(.2);
+                        WaitSecs(.2)
+                        KbWait;
+                        WaitSecs(.2)
+
+                        % Alignment task
+                        % Select left-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 0);
+                        % Draw left stim:
+                        Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                        % Select right-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 1);
+                        Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                        Screen('DrawingFinished', windowPtr);
+                        Screen('Flip', windowPtr);
+
                         [keyIsDown, ~, keyCode] = KbCheck; % make sure all keys are rleased
                         % wait for either space for resume or
                         % escape for terminating the task
                         while ~keyIsDown
-                            [stopButton, ~, keyCode] = KbCheck;
+                            [keyIsDown, secs, keyCode] = KbCheck;
                             if strcmp(KbName(keyCode), 'space')
                                 break
                             elseif strcmp(KbName(keyCode), 'ESCAPE')
@@ -312,12 +328,12 @@ switch BinocularCond
                             end
                         end % end of inside while loop
                     end
+
+                elseif ~keyIsDown1   % if no keys is put a place holder in response table and detemine next trial presentation
                     Response(trial_i,3) = 99;
                     Response(trial_i,4) = 99;
-                    t0 = secs;
-                elseif ~keyIsDown1
-                    secs = 0;
                     t0 = t1 + WiatTime;
+                    secs = 0 ;
                 end
                 if flag,break,end % break outside while loop because we don't want to wait for WaitTime
             end
@@ -333,18 +349,17 @@ switch BinocularCond
             end
             orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
             Response(trial_i,2) = orient_vect(end);
-            % pick a random stimulus posiontion
-            % Applying eccentircity
+
             StimPosition = [xCenter yCenter] + E;
             CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
             CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
             params(1) = 360 * rand; % set initial phase randomly
-            % Select left-eye image buffer for drawing:
+
             Screen('SelectStereoDrawBuffer', windowPtr, 0);
             Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
             Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-            % incorporating catch trials
-            if catchTrial(trial_i) == 1 % if it is a catch trial make distractors disappear
+
+            if catchTrial(trial_i) == 1
                 Response(trial_i,5) = 1;
                 params(3) = 0;
                 Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs],orient_vect(1:end-1), [], [],...
@@ -355,11 +370,11 @@ switch BinocularCond
                 Screen('DrawTextures', windowPtr, text, [], [CR.crowdingLocs],orient_vect(1:end-1), [], [],...
                     [], [], [], params');
             end
-            % Select right-eye image buffer for drawing:
+
             Screen('SelectStereoDrawBuffer', windowPtr, 1);
             Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
             Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-            params(3) = 1; % reset the value of contrast for target
+            params(3) = 1;
             Screen('DrawTextures', windowPtr, text, [], CR.targetLocs',orient_vect(end), [], [],...
                 [], [], [], params');
             Screen('DrawingFinished', windowPtr);
@@ -377,12 +392,12 @@ switch BinocularCond
             Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
             Screen('DrawingFinished', windowPtr);
             Screen('Flip', windowPtr);
-            WiatTime = 5;       % Wait for response
-            while KbCheck; end % To make sure all keys are released
+            WiatTime = 5;
+            while KbCheck; end
             TrialEnd = GetSecs;
             while GetSecs < TrialEnd + WiatTime
-                [keyIsDown, secs, keyCode]= KbCheck;
-                if keyIsDown
+                [keyIsDown1, secs, keyCode]= KbCheck;
+                if keyIsDown1
                     if (Response(trial_i,2) <= 90 && strcmp(KbName(keyCode),'DownArrow')) || ((Response(trial_i,2) >= 90 && strcmp(KbName(keyCode), 'UpArrow')))
                         Response(trial_i,3) = 1;
                         Response(trial_i,4) = secs - TrialEnd;
@@ -392,26 +407,48 @@ switch BinocularCond
                         Response(trial_i,4) = secs - TrialEnd;
                         break
                     elseif strcmp(KbName(keyCode), 'space')
-                        str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials '] );
-                        DrawFormattedText(windowPtr, str, 'center', 'center', 1);
+                        Trial_count = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials ']);
+                        DrawFormattedText(windowPtr, Trial_count, 'center', 'center', 1);
                         % Draw instruction text string centered in window
                         Screen( 'Flip', windowPtr);
-                        WaitSecs(.2);
-                        [keyIsDown, ~, keyCode] = KbCheck;
+                        WaitSecs(.2)
+                        KbWait;
+                        WaitSecs(.2)
+
+                        % Alignment task
+                        % Select left-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 0);
+                        % Draw left stim:
+                        Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
+                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                        % Select right-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 1);
+                        Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
+                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                        Screen('DrawingFinished', windowPtr);
+                        Screen('Flip', windowPtr);
+
+                        [keyIsDown, ~, keyCode] = KbCheck; % make sure all keys are rleased
+                        % wait for either space for resume or
+                        % escape for terminating the task
                         while ~keyIsDown
-                            [stopButton, ~, keyCode] = KbCheck;
+                            [keyIsDown, secs, keyCode] = KbCheck;
                             if strcmp(KbName(keyCode), 'space')
                                 break
                             elseif strcmp(KbName(keyCode), 'ESCAPE')
                                 flag = 1;
                                 break
                             end
-                        end
+                        end % end of inside while loop
                     end
+
+                elseif ~keyIsDown1   % if no keys is put a place holder in response table and detemine next trial presentation
                     Response(trial_i,3) = 99;
                     Response(trial_i,4) = 99;
+                    t0 = t1 + WiatTime;
+                    secs = 0 ;
                 end
-                if flag,break,end
+                if flag,break,end % break outside while loop because we don't want to wait for WaitTime
             end
             fprintf("Trial number is %i \n",nTrials)
             % If flag is 1 which means 'escape' was pressed end
