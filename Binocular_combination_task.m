@@ -20,8 +20,8 @@ end
 % Define display parameters
 scrnNum     = max(Screen('Screens'));
 stereoMode  = 4; % Define the mode for stereodisply
-BC.ScreenDistance = 50; % in centimeter
-BC.ScreenHeight = 19; % in centimeter
+BC.ScreenDistance = 75; % in centimeter
+BC.ScreenHeight = 27; % in centimeter
 BC.ScreenGamma = 2.2; % from monitor calibration
 BC.maxLuminance = 100; % from monitor calibration
 BC.ScreenBackground = 0.5;
