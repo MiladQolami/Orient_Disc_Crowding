@@ -2,7 +2,7 @@
 % SetupPsychtoolbox
 %%
 %%%%%%%%%%%%%% Orientation Discrimination under Crowding and interocular suppression %%%%%%%%%%%
-% This code was written by Milad Qolami
+% This code was written by Milad Qolami 
 clc;
 clear;
 close all;

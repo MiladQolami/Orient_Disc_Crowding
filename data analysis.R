@@ -4,11 +4,18 @@ library(tidyverse)
 # change the working directory to where you've downloaded data
 setwd("D:/Orientation Discrimination project/Orient_Disc_Crowding/Data")
 
-data <- read.mat('1001_training.mat')
+# Loading data sets
+BinComDataRaw <- readMat('BinComDataset.mat')
+CrowdingDatasetRaw <- readMat('CrowdingDataset.mat')
 
-# convert data from a matrix into a data frame
-data <- as.data.frame(data$Response)
 
-crowdTrials <- dplyr::filter(data1,V5==0)
-catchTrials <- dplyr::filter(data1,V5==1)
-performance <- crowdTrials %>% group_by(V2) %>% summarise(avg = mean(V3))
+
+# Creating a list which include data of all subjects
+BinComData <- BinComDataRaw$BinComDataset
+CrowdingDataset <- CrowdingDatasetRaw$CrowdingDataset
+rm(BinComDataRaw,CrowdingDatasetRaw)
+
+
+
+
+
