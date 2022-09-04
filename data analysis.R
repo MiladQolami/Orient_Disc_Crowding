@@ -15,7 +15,10 @@ BinComData <- BinComDataRaw$BinComDataset
 CrowdingDataset <- CrowdingDatasetRaw$CrowdingDataset
 rm(BinComDataRaw,CrowdingDatasetRaw)
 
-
+subject1_df <- as.data.frame(BinComData[1])
+ggplot(subject1_df) + geom_point(mapping = aes(x = X2,
+                                               y = X5,
+                                               colour = X2))  
 
 
 

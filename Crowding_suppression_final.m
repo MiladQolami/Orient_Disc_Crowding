@@ -135,7 +135,6 @@ E             = [-e,e];                                                         
 FrameSquareSizePixel = 2 * round(CR.FrameSquareSizeAngle * ppd / 2);                 % Size of the fusional frame square in pixel
 
 
-
 % Nonuis cross (central fusion lock)
 fixCrossSize            = 0.4;                                   % Size of each arm in visual angle
 fixCrossDimPix          = 2 * round(fixCrossSize * ppd / 2);
@@ -151,6 +150,20 @@ FrameSquareSizePixels = [0 0 FrameSquareSizePixel FrameSquareSizePixel]; % A bas
 FrameSquarePosition   = CenterRectOnPointd(FrameSquareSizePixels, xCenter, yCenter); % Center it where we want
 penWidthPixels        = 6;  % Pen width for the frames
 
+% Generate the stimulus texture
+radius           = m/2;                   % radius of disc edge
+sigma            = 10;                    % smoothing sigma in pixel
+useAlpha         = true;                  % use alpha channel for smoothing?
+smoothMethod     = 1;                     % smoothing method: cosine (0) or smoothstep (1) or inverse smoothstep (2)
+text             =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
+    m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
+params           = [0 sf CR.contrast 0];  % Dfining parameters for the grating
+
+% Stimuli position 
+StimPosition = [xCenter yCenter] + E;
+CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
+CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
+
 
 % Initialize a table to initialize
 CR.resLabel              = {'trialIndex' 'targetOrientation' 'respCorrect' 'respTime' 'catchTrial' };
@@ -162,14 +175,6 @@ catchTrial               = Shuffle([zeros(round(2*nTrials/3),1) ;ones(round(nTri
 Response                 = nan(nTrials, length(CR.resLabel));     % matrix res is nTrials x 5 of NaN
 Response(:, 1)           = 1 : nTrials;    % Label the trial type numbers from 1 to nTrials
 
-% Generate the stimulus texture
-radius           = m/2;                   % radius of disc edge
-sigma            = 10;                    % smoothing sigma in pixel
-useAlpha         = true;                  % use alpha channel for smoothing?
-smoothMethod     = 1;                     % smoothing method: cosine (0) or smoothstep (1) or inverse smoothstep (2)
-text             =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
-    m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
-params           = [0 sf CR.contrast 0];  % Dfining parameters for the grating
 
 % Prioritize display to optimize display timing
 Priority(MaxPriority(windowPtr));
@@ -180,10 +185,13 @@ Screen('SelectStereoDrawBuffer', windowPtr, 0);
 % Draw left stim:
 Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 1, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+Screen('FillOval',windowPtr,1,CR.crowdingLocs)
 % Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', windowPtr, 1);
 Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 1, [xCenter, yCenter]);
 Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+Screen('FillOval',windowPtr,0,CR.targetLocs)
+
 Screen('DrawingFinished', windowPtr);
 Screen('Flip', windowPtr);
 KbWait;
@@ -222,11 +230,6 @@ switch BinocularCond
             % target(random)
             orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
             Response(trial_i,2) = orient_vect(end);
-            % pick a random stimulus posiontion
-            % Applying eccentircity
-            StimPosition = [xCenter yCenter] + E;
-            CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-            CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
             params(1) = 360 * rand; % set initial phase randomly
             % Select left-eye image buffer for drawing:
             Screen('SelectStereoDrawBuffer', windowPtr, 0);
@@ -348,11 +351,7 @@ switch BinocularCond
                 break
             end
             orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
-            Response(trial_i,2) = orient_vect(end);
 
-            StimPosition = [xCenter yCenter] + E;
-            CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
-            CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
             params(1) = 360 * rand; % set initial phase randomly
 
             Screen('SelectStereoDrawBuffer', windowPtr, 0);
