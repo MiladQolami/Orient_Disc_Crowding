@@ -6,7 +6,6 @@
 clc;
 clear;
 close all;
-
 %% Inputs
 % Select a folder to save results there
 savedir = uigetdir('Where to save data');

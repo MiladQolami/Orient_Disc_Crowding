@@ -2,7 +2,7 @@
 % SetupPsychtoolbox
 %%
 %%%%%%%%%%%%%% Orientation Discrimination under Crowding and interocular suppression %%%%%%%%%%%
-% This code was written by Milad Qolami 
+% This code was written by Milad Qolami
 clc;
 clear;
 close all;
@@ -133,7 +133,8 @@ e             = 2 * round(CR.eccentricity * ppd / 2);                           
 sf            = CR.sf / ppd;                                                         % Cycles per pixel
 E             = [-e,e];                                                              % Creating Eccentricity vector (center of a rectangle where the stimuli will be presented)
 FrameSquareSizePixel = 2 * round(CR.FrameSquareSizeAngle * ppd / 2);                 % Size of the fusional frame square in pixel
-
+beep = MakeBeep(400,1);        % Make a beep to indicate break time
+Snd('Play',beep);
 
 % Nonuis cross (central fusion lock)
 fixCrossSize            = 0.4;                                   % Size of each arm in visual angle
@@ -159,7 +160,7 @@ text             =  CreateProceduralSmoothedApertureSineGrating(windowPtr,...
     m, m, [.5 .5 .5 .5],radius,[],sigma,useAlpha,smoothMethod);
 params           = [0 sf CR.contrast 0];  % Dfining parameters for the grating
 
-% Stimuli position 
+% Stimuli position
 StimPosition = [xCenter yCenter] + E;
 CR.targetLocs   = [StimPosition(1)-m/2  StimPosition(2)-m/2 StimPosition(1)+m/2 StimPosition(2)+m/2];
 CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
@@ -226,6 +227,10 @@ switch BinocularCond
             if flag
                 break
             end
+            if trial_i == round(nTrials) % Stop when reaching to half of the trials
+                Snd("Play",beep);
+                secs = kbwait;
+            end
             % Create a matrix of orientation for distractor and for
             % target(random)
             orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
@@ -288,7 +293,8 @@ switch BinocularCond
                     if (Response(trial_i,2) <= 90 && strcmp(KbName(keyCode),'DownArrow')) || ((Response(trial_i,2) >= 90 && strcmp(KbName(keyCode), 'UpArrow')))
                         Response(trial_i,3) = 1;
                         Response(trial_i,4) = secs - TrialEnd;
-                        Beeper;break
+                        Beeper;
+                        break
                         % incoreccet response
                     elseif (Response(trial_i,2) <=  90 && strcmp(KbName(keyCode),'UpArrow')) || ((Response(trial_i,2) >= 90 && strcmp(KbName(keyCode), 'DownArrow')))
                         Response(trial_i,3) = 0;
@@ -302,7 +308,7 @@ switch BinocularCond
                         % Draw instruction text string centered in window
                         Screen( 'Flip', windowPtr);
                         WaitSecs(.2)
-                       
+
                         [keyIsDown, ~, keyCode] = KbCheck; % make sure all keys are rleased
                         % wait for either space for resume or
                         % escape for terminating the task
@@ -335,6 +341,12 @@ switch BinocularCond
             if flag
                 break
             end
+
+            if trial_i == round(nTrials) % Stop when reaching to half of the trials
+                Snd("Play",beep);
+                secs = kbwait;
+            end
+
             orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
             Response(trial_i,2) = orient_vect(end);
             params(1) = 360 * rand; % set initial phase randomly
