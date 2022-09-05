@@ -302,22 +302,7 @@ switch BinocularCond
                         % Draw instruction text string centered in window
                         Screen( 'Flip', windowPtr);
                         WaitSecs(.2)
-                        KbWait;
-                        WaitSecs(.2)
-
-                        % Alignment task
-                        % Select left-eye image buffer for drawing:
-                        Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        % Draw left stim:
-                        Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
-                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-                        % Select right-eye image buffer for drawing:
-                        Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
-                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-                        Screen('DrawingFinished', windowPtr);
-                        Screen('Flip', windowPtr);
-
+                       
                         [keyIsDown, ~, keyCode] = KbCheck; % make sure all keys are rleased
                         % wait for either space for resume or
                         % escape for terminating the task
@@ -351,9 +336,8 @@ switch BinocularCond
                 break
             end
             orient_vect = [repmat(distractorOrientation,1,CR.numCrowd/2) targetOrientation(trial_i)];
-
+            Response(trial_i,2) = orient_vect(end);
             params(1) = 360 * rand; % set initial phase randomly
-
             Screen('SelectStereoDrawBuffer', windowPtr, 0);
             Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
             Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
@@ -410,23 +394,7 @@ switch BinocularCond
                         DrawFormattedText(windowPtr, Trial_count, 'center', 'center', 1);
                         % Draw instruction text string centered in window
                         Screen( 'Flip', windowPtr);
-                        WaitSecs(.2)
-                        KbWait;
-                        WaitSecs(.2)
-
-                        % Alignment task
-                        % Select left-eye image buffer for drawing:
-                        Screen('SelectStereoDrawBuffer', windowPtr, 0);
-                        % Draw left stim:
-                        Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 0, [xCenter, yCenter]);
-                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-                        % Select right-eye image buffer for drawing:
-                        Screen('SelectStereoDrawBuffer', windowPtr, 1);
-                        Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 0, [xCenter, yCenter]);
-                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
-                        Screen('DrawingFinished', windowPtr);
-                        Screen('Flip', windowPtr);
-
+                        WaitSecs(.2);
                         [keyIsDown, ~, keyCode] = KbCheck; % make sure all keys are rleased
                         % wait for either space for resume or
                         % escape for terminating the task

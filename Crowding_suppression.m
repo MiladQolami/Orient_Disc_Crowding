@@ -294,9 +294,25 @@ switch BinocularCond
                             elseif strcmp(KbName(keyCode), 'space')
                                 str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials ']);
                                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
-                                % Draw instruction text string centered in window
-                                Screen( 'Flip', windowPtr);
-                                WaitSecs(.2);
+                               % Alignment task
+                        % Select left-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 0);
+                        % Draw left stim:
+                        Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 1, [xCenter, yCenter]);
+                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                        Screen('DrawLines',windowPtr,allcordSign,SignWidth,0);
+                        Screen('FillOval',windowPtr,1,CR.crowdingLocs)
+                        % Select right-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 1);
+                        Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 1, [xCenter, yCenter]);
+                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                        Screen('FillOval',windowPtr,0,CR.targetLocs);
+                        Screen('DrawLines',windowPtr,allcordSign,SignWidth,0);
+                        Screen('DrawingFinished', windowPtr);
+
+                        % Draw instruction text string centered in window
+                        Screen( 'Flip', windowPtr);
+                        WaitSecs(.2);
                                 [keyIsDown, ~, keyCode] = KbCheck; % make sure all keys are rleased
                                 % wait for either space for resume or
                                 % escape for terminating the task
@@ -393,9 +409,25 @@ switch BinocularCond
                             elseif strcmp(KbName(keyCode), 'space')
                                 str = sprintf([num2str(trial_i) ' of ' num2str(nTrials) ' trials ']);
                                 DrawFormattedText(windowPtr, str, 'center', 'center', 1);
-                                % Draw instruction text string centered in window
-                                Screen( 'Flip', windowPtr);
-                                WaitSecs(.2);
+                                % Alignment task
+                        % Select left-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 0);
+                        % Draw left stim:
+                        Screen('DrawLines', windowPtr, fixCrossLeft,lineWidthPix, 1, [xCenter, yCenter]);
+                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                        Screen('DrawLines',windowPtr,allcordSign,SignWidth,0);
+                        Screen('FillOval',windowPtr,1,CR.crowdingLocs)
+                        % Select right-eye image buffer for drawing:
+                        Screen('SelectStereoDrawBuffer', windowPtr, 1);
+                        Screen('DrawLines', windowPtr, fixCrossRight,lineWidthPix, 1, [xCenter, yCenter]);
+                        Screen('FrameRect', windowPtr, 0, FrameSquarePosition, penWidthPixels);
+                        Screen('FillOval',windowPtr,0,CR.targetLocs);
+                        Screen('DrawLines',windowPtr,allcordSign,SignWidth,0);
+                        Screen('DrawingFinished', windowPtr);
+
+                        % Draw instruction text string centered in window
+                        Screen( 'Flip', windowPtr);
+                        WaitSecs(.2);
                                 [keyIsDown, ~, keyCode] = KbCheck;
                                 while ~keyIsDown
                                     [stopButton, ~, keyCode] = KbCheck;
