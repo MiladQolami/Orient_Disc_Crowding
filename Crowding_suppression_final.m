@@ -423,7 +423,7 @@ switch BinocularCond
         end
 end
 CR.finish = datestr(now); % record finish time
-filename = strcat('Crowding', num2str(SubjectID), '_' ,DominantEye, '_' ,BinocularCond);
+filename = strcat('Crowding', num2str(SubjectID),'_' ,DominantEye, '_' ,BinocularCond,'_',NDFilter);
 save (fullfile(savedir,filename),'Response', 'CR'); % save the results
 sca;
 %% System Reinstatement Module

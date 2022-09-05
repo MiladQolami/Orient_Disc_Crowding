@@ -12,6 +12,7 @@ close all;
 savedir = uigetdir('Where to save data');
 
 SubjectID = input('Inter subject ID:');
+NDFilter  = input('NDFilter? (1 or 0): ','s');
 DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'?) : ","s");
 while ~any(strcmp(DominantEye,{'Right','Left'}))
     DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'?) : ","s");
@@ -50,7 +51,7 @@ PsychImaging('AddTask', 'General', 'EnablePseudoGrayOutput' );
 PsychImaging( 'AddTask' , 'FinalFormatting','DisplayColorCorrection' , 'SimpleGamma' );
 % setup Gamma correction method using simple power  function for all color channels
 
-[windowPtr BC.ScreenRect] = PsychImaging( 'OpenWindow'  , scrnNum, BC.ScreenBackground, [], [], [], stereoMode);
+[windowPtr, BC.ScreenRect] = PsychImaging( 'OpenWindow'  , scrnNum, BC.ScreenBackground, [], [], [], stereoMode);
 
 % Enable alpha-blending
 Screen('BlendFunction', windowPtr, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
@@ -65,8 +66,8 @@ PsychColorCorrection( 'SetEncodingGamma', windowPtr,1/ BC.ScreenGamma);
 HideCursor; % Hide the mouse cursor
 
 % Get frame rate and set screen font
-BC.ScreenFrameRate = FrameRate(windowPtr);
-monitorFlipInterval =Screen('GetFlipInterval', windowPtr)
+BC.ScreenFrameRate  = FrameRate(windowPtr);
+monitorFlipInterval = Screen('GetFlipInterval', windowPtr);
 % get current frame rate
 Screen( 'TextSize', windowPtr, 15); % set the font size
 % for the screen to 24
@@ -221,7 +222,7 @@ sca;
 CR.finish = datestr(now); % record finish time
 
 % Save results
-filename = strcat('BinCom', num2str(SubjectID), '_' ,DominantEye);
+filename = strcat('BinCom', num2str(SubjectID), '_' ,DominantEye,'_',NDFilter);
 save (fullfile(savedir,filename),'Response', 'BC'); % save the results
     
 %% System Reinstatement Module
