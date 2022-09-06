@@ -9,7 +9,6 @@ close all;
 %% Inputs
 % Select a folder to save results there
 savedir = uigetdir('Where to save data');
-
 SubjectID = input('Inter subject ID:');
 NDFilter  = input('NDFilter? (1 or 0): ','s');
 DominantEye = input("Which Eye is dominant (either 'Right' or 'Left'?) : ","s");
@@ -77,14 +76,14 @@ Screen( 'TextSize', windowPtr, 15); % set the font size
 BC.randSeed      = ClockRandSeed;
 
 % Specify the stimulus
-BC.stimSize      = 3.3;      % In visual angle
+BC.stimSize      = 4;      % In visual angle
 BC.eccentricity  = 0;      % Stimulus eccentricity
 BC.ISI           = 2;        % Interstimulus interval
 BC.contrast      = 1;
-BC.sf            = 2;       % Spatial frequency in cycles/degree
-nTrials          = 2;       % Must be even
-trialLength      = 10;      % Duration of a trial in secs
-FrameSquareSizeAngle = 10;     % Size of the fusional frame square in anlge
+BC.sf            = 1.3;       % Spatial frequency in cycles/degree
+nTrials          = 6;       % Must be even
+trialLength      = 60;      % Duration of a trial in secs
+FrameSquareSizeAngle = 8;     % Size of the fusional frame square in anlge
 beep = MakeBeep(400,.5);        % Make a beep to indicate end of trial
 
 % Compute stimulus parameters
@@ -119,7 +118,7 @@ StimulusPosition = CenterRectOnPointd(baseRect, xCenter+e, yCenter+e);
 % Initialize a table to set up experimental conditions
 BC.resLabel            = {'trialIndex' 'LeftEyeOrientation' 'RightEyeOrientation' 'ResponseOrientataion' 'ResponseTime' }; % 37 is left,38 is up and 39 is right
 Response               = cell(nTrials, length(BC.resLabel));     % matrix res is nTrials x 5 of NaN
-Orientations           = [repmat([80 100],nTrials/2,1);repmat([100 80],nTrials/2,1)]; % Orientatin of grating presented to left and right eye
+Orientations           = [repmat([85 95],nTrials/2,1);repmat([95 85],nTrials/2,1)]; % Orientatin of grating presented to left and right eye
 Orientations           = Orientations(Shuffle(1:nTrials),:);
 for i=1:nTrials
     Response{i,1}          = i;
