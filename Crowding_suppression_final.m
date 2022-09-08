@@ -121,7 +121,7 @@ CR.ISI                  = 1;                % Time between response and next tri
 CR.contrast             = 1;                % Contrast of gratings
 CR.sf                   = 4;                % Spatial frequency in cycles/degree
 CR.numCrowd             = 6;                % Number of crowding stimuli
-CR.repCond              = 10;               % number of repetition for each condition, this specifies number of trials
+CR.repCond              = 20;               % number of repetition for each condition, this specifies number of trials
 CR.FrameSquareSizeAngle = 16;               % Size of the fusional frame square in anlge
 
 
@@ -168,7 +168,9 @@ CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
 
 % Initialize a table to initialize
 CR.resLabel              = {'trialIndex' 'targetOrientation' 'respCorrect' 'respTime' 'catchTrial' };
-targetOrientation        = 70:1:110;    % Target orientation varies from 25 to 65 of step 2
+StimLevels = logspace(log10(1),log10(20),10)
+[90 - StimLevels, 90 + StimLevels]
+targetOrientation        = [90 - StimLevels, 90 + StimLevels];    % Target orientation varies from 25 to 65 of step 2
 targetOrientation        = Shuffle(repmat(targetOrientation,1,CR.repCond));  % create a vectro of orientation for all trials
 nTrials                  = length(targetOrientation);    % number of tirals
 distractorOrientation    = [80,100];    % Distractor orientation is either 35 or 55
