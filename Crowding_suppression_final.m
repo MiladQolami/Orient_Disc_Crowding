@@ -169,8 +169,7 @@ CR.crowdingLocs = VisualCrowder(StimPosition,CR.numCrowd, d ,m);
 % Initialize a table to initialize
 CR.resLabel              = {'trialIndex' 'targetOrientation' 'respCorrect' 'respTime' 'catchTrial' };
 StimLevels = logspace(log10(1),log10(20),10)
-[90 - StimLevels, 90 + StimLevels]
-targetOrientation        = [90 - StimLevels, 90 + StimLevels];    % Target orientation varies from 25 to 65 of step 2
+targetOrientation        = [90 - StimLevels, 90 + StimLevels,90];    % Target orientation varies from 25 to 65 of step 2
 targetOrientation        = Shuffle(repmat(targetOrientation,1,CR.repCond));  % create a vectro of orientation for all trials
 nTrials                  = length(targetOrientation);    % number of tirals
 distractorOrientation    = [80,100];    % Distractor orientation is either 35 or 55
